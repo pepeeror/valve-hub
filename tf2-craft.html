@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор крафта TF2 (Металл и Шапки) | VALVE HUB</title>
+    <meta name="description" content="Калькулятор переплавки оружия в металл TF2, анализ выгодности крафта шапок и интерактивная шпаргалка рецептов.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .recipe-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .recipe-table th {
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-input);
+        }
+        .recipe-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .recipe-badge {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: var(--bg-input);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--green);
+            cursor: pointer;
+        }
+        .checklist-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        .checklist-item small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+        
+        .warning-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--red);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 700;
+            margin-top: 15px;
+            display: none;
+        }
+        .warning-box.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Калькулятор крафта TF2</h1>
+            <p style="color: var(--text-muted);">Переплавка оружия в металл, расчет выгоды шапок и шпаргалка рецептов.</p>
+        </div>
+
+        <!-- БЛОК 1: Переплавка оружия -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🔄 Блок 1: Переплавка оружия в металл</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Количество оружия в рюкзаке (шт.)</label>
+                    <input type="number" id="weapons-count" value="54" min="0" step="1">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button id="btn-calc-weapons" class="btn" style="width: 100%;">Рассчитать</button>
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Металлолом (Scrap):</span>
+                    <span id="res-scrap" class="text-gold" style="font-weight: 700; font-size: 18px;">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Восстановленный металл (Rec):</span>
+                    <span id="res-rec" style="font-weight: 700; color: #a3e635;">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Очищенный металл (Ref):</span>
+                    <span id="res-ref" class="text-green" style="font-weight: 700; font-size: 20px;">0</span>
+                </div>
+                <div class="result-row" style="border-bottom: none;">
+                    <span>Можно скрафтить случайных шапок:</span>
+                    <span id="res-hats" style="font-weight: 700; color: var(--accent);">0</span>
+                </div>
+                <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="res-remainder">
+                    Остаток: 0 оружия
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Выгодно ли крафтить шапки? -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🧢 Блок 2: Выгодно ли крафтить шапки?</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Рецепт крафта</label>
+                    <select id="craft-recipe">
+                        <option value="random">Случайный головной убор (3.00 Ref)</option>
+                        <option value="class">Конкретный с жетоном класса (4.50 Ref)</option>
+                        <option value="rebuild">Перековка 2 дешёвых шапок (2.66 Ref)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Средняя цена крафтовой шапки (Ref)</label>
+                    <input type="number" id="craft-hat-price" value="1.44" min="0" step="0.01">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена 1 Ref в USD</label>
+                    <input type="number" id="craft-ref-usd" value="0.025" min="0" step="0.001">
+                </div>
+                <div class="form-group">
+                    <label>Сколько попыток крафта?</label>
+                    <input type="number" id="craft-attempts" value="10" min="1" step="1">
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Затраты на 1 крафт (Ref):</span>
+                    <span id="craft-cost-ref" style="font-weight: 700;">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Затраты на 1 крафт ($):</span>
+                    <span id="craft-cost-usd" style="font-weight: 700;">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Общие затраты на серию (Ref):</span>
+                    <span id="craft-total-cost-ref" style="font-weight: 700; color: var(--gold);">0.00</span>
+                </div>
+                <div class="result-row" style="border-bottom: none;">
+                    <span>Гарантированный убыток (если выпадут только обычные):</span>
+                    <span id="craft-guaranteed-loss" style="font-weight: 700; color: var(--red);">0.00</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px; font-size: 14px; color: var(--text-muted);" id="craft-breakeven-text">
+                    Шанс окупиться: ...
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 3: Планировщик и чек-лист -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📖 Блок 3: Планировщик крафта и чек-лист</h2>
+            
+            <h3 style="font-size: 18px; margin-bottom: 15px; color: var(--accent);">🔄 Обратный калькулятор «Что мне нужно?»</h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Целевой предмет</label>
+                    <select id="planner-target">
+                        <option value="random">Случайный головной убор (3.00 Ref)</option>
+                        <option value="class">Шапка конкретного класса (4.00 Ref + Жетон)</option>
+                        <option value="rebuild">Перековка 2 ненужных шапок (2 шапки)</option>
+                        <option value="weapon">Конкретное оружие (Жетон + Жетон + 1 Scrap)</option>
+                        <option value="custom">Свой рецепт</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Количество крафтов</label>
+                    <input type="number" id="planner-qty" value="5" min="1" step="1">
+                </div>
+            </div>
+
+            <div class="form-row" id="custom-recipe-inputs" style="display: none;">
+                <div class="form-group">
+                    <label>Refined (Ref)</label>
+                    <input type="number" id="custom-ref" value="0" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Reclaimed (Rec)</label>
+                    <input type="number" id="custom-rec" value="0" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Scrap</label>
+                    <input type="number" id="custom-scrap" value="0" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Жетоны (шт.)</label>
+                    <input type="number" id="custom-tokens" value="0" min="0" step="1">
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Нужно Refined (Ref):</span>
+                    <span id="planner-ref" class="text-gold" style="font-weight: 700;">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Нужно Scrap:</span>
+                    <span id="planner-scrap" style="font-weight: 700;">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Нужно оружия (Weapons):</span>
+                    <span id="planner-weapons" style="font-weight: 700; color: var(--accent);">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Стоимость в реальных деньгах ($):</span>
+                    <span id="planner-cost-usd" style="font-weight: 700; color: var(--green);">0.00 $</span>
+                </div>
+                <div class="result-row" style="border-bottom: none;" id="planner-match-row">
+                    <span>Сверка с Блоком 1:</span>
+                    <span id="planner-match" style="font-weight: 700;">—</span>
+                </div>
+            </div>
+
+            <h3 style="font-size: 18px; margin: 30px 0 15px; color: var(--accent);">📋 Расширенная база рецептов</h3>
+            
+            <div class="filter-chips" id="recipe-filters" style="margin-bottom: 15px;">
+                <div class="chip active" data-cat="all">Все рецепты</div>
+                <div class="chip" data-cat="metal">Металлы</div>
+                <div class="chip" data-cat="hat">Шапки и косметика</div>
+                <div class="chip" data-cat="weapon">Оружие и жетоны</div>
+                <div class="chip" data-cat="special">Особые крафты</div>
+            </div>
+
+            <table class="recipe-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Ингредиенты</th>
+                        <th>Стоимость (Ref)</th>
+                        <th>Стоимость ($)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="recipe-tbody">
+                    <!-- Заполняется через JS -->
+                </tbody>
+            </table>
+
+            <h3 style="font-size: 18px; margin: 30px 0 15px; color: var(--accent);">🛡️ Чек-лист безопасности</h3>
+            
+            <div class="checkbox-group" style="margin-bottom: 15px;">
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-tradable" checked>
+                    <label for="check-tradable">Все ингредиенты имеют статус Передаваемый (Tradable)
+                        <small>Если хотя бы один предмет непередаваемый, итог тоже будет непередаваемым.</small>
+                    </label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-achievement" checked>
+                    <label for="check-achievement">В крафте НЕ используется оружие за достижения (Achievement Item)
+                        <small>Оружие за достижения нельзя передавать или продавать.</small>
+                    </label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-strange" checked>
+                    <label for="check-strange">В крафте НЕ используются предметы качества Strange / Vintage / Genuine
+                        <small>Эти предметы имеют коллекционную ценность, их нельзя пускать в крафт.</small>
+                    </label>
+                </div>
+            </div>
+
+            <div class="warning-box" id="safety-warning">
+                ⚠️ Внимание! Итоговая шапка станет НЕПЕРЕДАВАЕМОЙ (Untradable) навсегда — её нельзя будет продать или обменять!
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ</h2>
+            <div class="faq-item">
+                <h3>Почему нельзя крафтить из непередаваемого оружия?</h3>
+                <p>В TF2 некоторые виды оружия (например, полученные за достижения или купленные в магазине Mann Co.) имеют статус «Не подлежит обмену» (Non-Tradable). Если вы используете такое оружие в крафте, полученная шапка тоже станет непередаваемой. Вы не сможете продать её на Backpack.tf или обменять на другие предметы, что делает крафт бессмысленным с точки зрения трейдинга.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Что выгоднее: крафтить шапки или покупать их на маркете?</h3>
+                <p>В 99% случаев покупка готовой шапки на торговой площадке (например, за 1.44 Ref) выгоднее, чем крафт (затраты 3.00 Ref). Крафт окупается только если вам повезет выбить дорогую шапку (например, Team Captain за 15 Ref). Однако шанс такого исхода мал, поэтому крафт — это скорее лотерея, чем способ заработка.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        // ==========================================
+        // БЛОК 1: ПЕРЕПЛАВКА ОРУЖИЯ
+        // ==========================================
+        function calcWeapons() {
+            const weapons = parseInt(document.getElementById('weapons-count').value) || 0;
+
+            const scrap = Math.floor(weapons / 2);
+            const rec = Math.floor(weapons / 6);
+            const ref = Math.floor(weapons / 18);
+            
+            const usedWeapons = ref * 18;
+            const remainder = weapons - usedWeapons;
+
+            const hats = Math.floor(ref / 3);
+
+            document.getElementById('res-scrap').textContent = scrap;
+            document.getElementById('res-rec').textContent = rec;
+            document.getElementById('res-ref').textContent = ref;
+            document.getElementById('res-hats').textContent = hats;
+            document.getElementById('res-remainder').textContent = `Остаток: ${remainder} оружия (не хватает на Ref)`;
+            
+            // Обновляем сверку в планировщике
+            updatePlanner();
+        }
+
+        document.getElementById('weapons-count').addEventListener('input', calcWeapons);
+        document.getElementById('btn-calc-weapons').addEventListener('click', calcWeapons);
+
+        // ==========================================
+        // БЛОК 2: ВЫГОДНО ЛИ КРАФТИТЬ?
+        // ==========================================
+        function calcCraft() {
+            const recipe = document.getElementById('craft-recipe').value;
+            const hatPrice = parseFloat(document.getElementById('craft-hat-price').value) || 1.44;
+            const refUsd = parseFloat(document.getElementById('craft-ref-usd').value) || 0.025;
+            const attempts = parseInt(document.getElementById('craft-attempts').value) || 10;
+
+            let costPerCraft = 0;
+            if (recipe === 'random') costPerCraft = 3.00;
+            else if (recipe === 'class') costPerCraft = 4.50;
+            else if (recipe === 'rebuild') costPerCraft = 2.66;
+
+            const totalCostRef = costPerCraft * attempts;
+            const totalCostUsd = totalCostRef * refUsd;
+
+            const guaranteedLoss = (hatPrice * attempts) - totalCostRef;
+
+            let breakevenText = '';
+            if (guaranteedLoss < 0) {
+                const lossPerCraft = costPerCraft - hatPrice;
+                const totalLoss = lossPerCraft * attempts;
+                const expensiveHatPrice = 10.00; 
+                const profitFromOneExpensive = expensiveHatPrice - hatPrice; 
+                const neededExpensiveHats = Math.ceil(totalLoss / profitFromOneExpensive);
+                breakevenText = `Чтобы окупить ${attempts} крафтов, нужно выбить минимум ${neededExpensiveHats} дорогих шапок (по ~${expensiveHatPrice} Ref).`;
+            } else {
+                breakevenText = `Вы уже в плюсе, даже если выпадут только обычные шапки!`;
+            }
+
+            document.getElementById('craft-cost-ref').textContent = costPerCraft.toFixed(2);
+            document.getElementById('craft-cost-usd').textContent = (costPerCraft * refUsd).toFixed(3) + ' $';
+            document.getElementById('craft-total-cost-ref').textContent = totalCostRef.toFixed(2) + ' Ref';
+            document.getElementById('craft-guaranteed-loss').textContent = guaranteedLoss.toFixed(2) + ' Ref';
+            document.getElementById('craft-breakeven-text').textContent = breakevenText;
+        }
+
+        document.getElementById('craft-recipe').addEventListener('change', calcCraft);
+        document.getElementById('craft-hat-price').addEventListener('input', calcCraft);
+        document.getElementById('craft-ref-usd').addEventListener('input', calcCraft);
+        document.getElementById('craft-attempts').addEventListener('input', calcCraft);
+
+        // ==========================================
+        // БЛОК 3: ПЛАНИРОВЩИК И РЕЦЕПТЫ
+        // ==========================================
+        const recipes = [
+            { name: 'Металлолом (Scrap)', cat: 'metal', ingredients: '2 оружия одного класса', refCost: 1/9, result: '1 Scrap' },
+            { name: 'Восстановленный (Rec)', cat: 'metal', ingredients: '3 Scrap', refCost: 1/3, result: '1 Reclaimed' },
+            { name: 'Очищенный (Ref)', cat: 'metal', ingredients: '3 Reclaimed', refCost: 1, result: '1 Refined' },
+            { name: 'Случайная шапка', cat: 'hat', ingredients: '3 Refined', refCost: 3, result: '1 Random Hat' },
+            { name: 'Перековка шапок', cat: 'hat', ingredients: '2 Hat', refCost: 2.66, result: '1 Random Hat' },
+            { name: 'Жетон класса', cat: 'weapon', ingredients: '3 оружия одного класса', refCost: 1/6, result: '1 Class Token' },
+            { name: 'Жетон слота', cat: 'weapon', ingredients: '3 оружия одного слота', refCost: 1/6, result: '1 Slot Token' },
+            { name: 'Ковка оружия', cat: 'weapon', ingredients: 'Class Token + Slot Token + 1 Scrap', refCost: 1/9 + 1/9 + 1/9, result: '1 Weapon' }
+        ];
+
+        function renderRecipes(filter = 'all') {
+            const tbody = document.getElementById('recipe-tbody');
+            tbody.innerHTML = '';
+
+            const refUsd = parseFloat(document.getElementById('craft-ref-usd').value) || 0.025;
+
+            recipes.forEach((r, index) => {
+                if (filter !== 'all' && r.cat !== filter) return;
+
+                const costUsd = r.refCost * refUsd;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="recipe-badge">${r.name}</span></td>
+                    <td>${r.ingredients}</td>
+                    <td style="font-weight: 700; color: var(--gold);">${r.refCost.toFixed(2)} Ref</td>
+                    <td style="font-weight: 700; color: var(--green);">$${costUsd.toFixed(3)}</td>
+                    <td><button class="btn btn-sm" onclick="selectRecipe(${index})">Выбрать</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.selectRecipe = function(index) {
+            const r = recipes[index];
+            // Подставляем в планировщик (просто для примера, можно сделать более сложную логику)
+            alert(`Выбран рецепт: ${r.name}. Теперь вы можете настроить его в планировщике.`);
+            // Здесь можно было бы автоматически заполнить поля в планировщике, но для простоты просто показываем alert
+        };
+
+        document.querySelectorAll('#recipe-filters .chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('#recipe-filters .chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                renderRecipes(chip.dataset.cat);
+            });
+        });
+
+        // ==========================================
+        // ОБРАТНЫЙ КАЛЬКУЛЯТОР
+        // ==========================================
+        function updatePlanner() {
+            const target = document.getElementById('planner-target').value;
+            const qty = parseInt(document.getElementById('planner-qty').value) || 1;
+            
+            let neededRef = 0;
+            let neededScrap = 0;
+            let neededWeapons = 0;
+
+            if (target === 'random') {
+                neededRef = 3 * qty;
+                neededWeapons = neededRef * 18;
+            } else if (target === 'class') {
+                neededRef = 4.5 * qty; // 4 Ref + 0.5 Ref за жетон
+                neededWeapons = neededRef * 18;
+            } else if (target === 'rebuild') {
+                neededRef = 2.66 * qty;
+                neededWeapons = neededRef * 18;
+            } else if (target === 'weapon') {
+                neededRef = (1/9) * qty;
+                neededWeapons = neededRef * 18;
+            } else if (target === 'custom') {
+                const ref = parseFloat(document.getElementById('custom-ref').value) || 0;
+                const rec = parseFloat(document.getElementById('custom-rec').value) || 0;
+                const scrap = parseFloat(document.getElementById('custom-scrap').value) || 0;
+                const tokens = parseFloat(document.getElementById('custom-tokens').value) || 0;
+                
+                neededRef = (ref + rec/3 + scrap/9 + tokens/6) * qty;
+                neededWeapons = neededRef * 18;
+            }
+
+            const refUsd = parseFloat(document.getElementById('craft-ref-usd').value) || 0.025;
+            const costUsd = neededRef * refUsd;
+
+            document.getElementById('planner-ref').textContent = neededRef.toFixed(2);
+            document.getElementById('planner-scrap').textContent = Math.round(neededRef * 9);
+            document.getElementById('planner-weapons').textContent = Math.round(neededWeapons);
+            document.getElementById('planner-cost-usd').textContent = costUsd.toFixed(3) + ' $';
+
+            // Сверка с Блоком 1
+            const currentWeapons = parseInt(document.getElementById('weapons-count').value) || 0;
+            const matchEl = document.getElementById('planner-match');
+            
+            if (currentWeapons >= neededWeapons) {
+                matchEl.textContent = '✅ Вам хватает оружия в рюкзаке!';
+                matchEl.style.color = 'var(--green)';
+            } else {
+                const diff = Math.ceil(neededWeapons - currentWeapons);
+                matchEl.textContent = `❌ Не хватает ещё ${diff} ед. оружия`;
+                matchEl.style.color = 'var(--red)';
+            }
+        }
+
+        document.getElementById('planner-target').addEventListener('change', (e) => {
+            const customInputs = document.getElementById('custom-recipe-inputs');
+            if (e.target.value === 'custom') {
+                customInputs.style.display = 'flex';
+            } else {
+                customInputs.style.display = 'none';
+            }
+            updatePlanner();
+        });
+
+        document.getElementById('planner-qty').addEventListener('input', updatePlanner);
+        document.getElementById('custom-ref').addEventListener('input', updatePlanner);
+        document.getElementById('custom-rec').addEventListener('input', updatePlanner);
+        document.getElementById('custom-scrap').addEventListener('input', updatePlanner);
+        document.getElementById('custom-tokens').addEventListener('input', updatePlanner);
+
+        // ==========================================
+        // ЧЕК-ЛИСТ БЕЗОПАСНОСТИ
+        // ==========================================
+        function checkSafety() {
+            const tradable = document.getElementById('check-tradable').checked;
+            const achievement = document.getElementById('check-achievement').checked;
+            const strange = document.getElementById('check-strange').checked;
+
+            const warningEl = document.getElementById('safety-warning');
+
+            if (!tradable || !achievement || !strange) {
+                warningEl.classList.add('show');
+            } else {
+                warningEl.classList.remove('show');
+            }
+        }
+
+        document.getElementById('check-tradable').addEventListener('change', checkSafety);
+        document.getElementById('check-achievement').addEventListener('change', checkSafety);
+        document.getElementById('check-strange').addEventListener('change', checkSafety);
+
+        // ==========================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ==========================================
+        window.onload = function() {
+            calcWeapons();
+            calcCraft();
+            renderRecipes();
+            updatePlanner();
+            checkSafety();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

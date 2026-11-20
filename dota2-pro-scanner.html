@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO Сканер Dota 2 (Арканы и Сокровищницы) | VALVE HUB</title>
+    <meta name="description" content="PRO-инструмент для трейдеров Dota 2: выгодное пополнение Steam через Арканы и Immortal-предметы, калькулятор окупаемости открытия сокровищниц.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .pro-lock-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 18, 24, 0.7);
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .pro-lock-content {
+            background: var(--bg-card); padding: 20px; border-radius: 12px;
+            border: 1px solid var(--accent); text-align: center; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .pro-lock-content h3 { color: var(--gold); margin-bottom: 10px; font-size: 18px; }
+        .pro-lock-content p { color: var(--text-muted); font-size: 13px; margin-bottom: 15px; }
+        .table-container { position: relative; overflow: hidden; min-height: 200px; }
+        .pro-table { width: 100%; border-collapse: collapse; }
+        .pro-table th {
+            text-align: left; font-size: 12px; color: var(--text-muted);
+            padding: 10px; border-bottom: 1px solid var(--border); background: var(--bg-input);
+        }
+        .pro-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-main); }
+        .pro-table tr:hover { background: rgba(255,255,255,0.02); }
+        .profit-green { color: var(--green); font-weight: 800; }
+        .roi-badge { background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
+        
+        .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .chip { padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .chip:hover { border-color: var(--accent); }
+        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        .roi-box {
+            background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-top: 15px;
+        }
+        .roi-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; border-bottom: 1px dashed var(--border); }
+        .roi-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span> <span style="font-size: 10px; background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle;">PRO</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">PRO Сканер Dota 2 <span style="font-size: 14px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 6px; vertical-align: middle;">PREMIUM</span></h1>
+            <p style="color: var(--text-muted);">Эксклюзивные связки Аркан и калькулятор сокровищниц.</p>
+        </div>
+
+        <!-- PRO-БЛОК 1: Сканер пополнения -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📈 Блок 1: Сканер пополнения Steam (Арканы и Immortal)</h2>
+            
+            <div class="filter-chips" id="dota-filters">
+                <div class="chip active" data-cat="all">Все предметы</div>
+                <div class="chip" data-cat="arcana">Arcana</div>
+                <div class="chip" data-cat="immortal">Immortal</div>
+                <div class="chip" data-cat="treasure">Сокровищницы</div>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 20px;">
+                <div class="form-group">
+                    <label>Ваш бюджет ($)</label>
+                    <input type="number" id="dota-budget" value="100" min="1" step="1">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button id="btn-recalc-dota" class="btn" style="width: 100%;">Пересчитать</button>
+                </div>
+            </div>
+
+            <div class="table-container" id="dota-table-container">
+                <table class="pro-table">
+                    <thead>
+                        <tr>
+                            <th>Предмет и герой</th>
+                            <th>Маркет ($)</th>
+                            <th>Steam (чистыми)</th>
+                            <th>Ликвид.</th>
+                            <th>Профит / ROI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dota-tbody"></tbody>
+                </table>
+                <div id="dota-lock" class="pro-lock-overlay" style="display: none;">
+                    <div class="pro-lock-content">
+                        <h3>🔒 Доступно в PRO-подписке</h3>
+                        <p>Получите доступ к связкам Аркан и предметов Dota 2.</p>
+                        <input type="text" id="pro-key-dota" placeholder="Введите ключ (VALVE2026)" style="width: 100%; margin-bottom: 10px; text-align: center;">
+                        <button class="btn" onclick="unlockPro()">Получить PRO-доступ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btn-add-dota" class="btn" style="width: auto;">+ Добавить связку</button>
+            </div>
+        </section>
+
+        <!-- PRO-БЛОК 2: Калькулятор сокровищниц -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🎁 Блок 2: Калькулятор окупаемости сокровищниц (Treasure ROI)</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена 1 сокровищницы ($)</label>
+                    <input type="number" id="t-price" value="2.50" step="0.01" min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Количество сундуков</label>
+                    <input type="number" id="t-count" value="15" step="1" min="1">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Средняя цена обычного сета ($)</label>
+                    <input type="number" id="t-common" value="0.50" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Цена Rare сета ($)</label>
+                    <input type="number" id="t-rare" value="8.00" step="0.01" min="0">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена Very Rare ($)</label>
+                    <input type="number" id="t-very-rare" value="25.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Цена Ultra Rare ($)</label>
+                    <input type="number" id="t-ultra-rare" value="120.00" step="0.01" min="0">
+                </div>
+            </div>
+
+            <div class="roi-box" id="treasure-result-box">
+                <div class="roi-row">
+                    <span>Затраты на сундуки:</span>
+                    <span id="t-cost" style="font-weight: 800; color: var(--red);">0.00 $</span>
+                </div>
+                <div class="roi-row">
+                    <span>Шанс выбить Rare (хотя бы 1):</span>
+                    <span id="t-chance-rare" style="color: var(--gold); font-weight: 600;">0%</span>
+                </div>
+                <div class="roi-row">
+                    <span>Шанс выбить Very Rare:</span>
+                    <span id="t-chance-vrare" style="color: #a3e635; font-weight: 600;">0%</span>
+                </div>
+                <div class="roi-row">
+                    <span>Шанс выбить Ultra Rare:</span>
+                    <span id="t-chance-ultra" style="color: var(--accent); font-weight: 600;">0%</span>
+                </div>
+                <div class="roi-row" style="margin-top: 10px; border-bottom: none;">
+                    <span>Ожидаемая выплата (EV):</span>
+                    <span id="t-ev" style="font-size: 18px; font-weight: 800; color: var(--gold);">0.00 $</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="t-verdict" class="roi-badge" style="font-size: 13px; padding: 6px 12px;">—</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">Преимущества PRO-подписки</h2>
+            <div class="feature-card" style="margin-bottom: 10px;">
+                <h4>📊 Связки Аркан</h4>
+                <p>Готовые предметы с маркетов, которые при перепродаже в Steam дают +15-25% к балансу.</p>
+            </div>
+            <div class="feature-card" style="margin-bottom: 10px;">
+                <h4>🎁 Оценка сокровищниц</h4>
+                <p>Математический расчет шансов и EV, чтобы не открывать сундуки в минус.</p>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="btn-reset-pro" class="btn" style="width: auto; font-size: 12px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Сбросить PRO (для теста)</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        // ==========================================
+        // ДАННЫЕ DOTA 2
+        // ==========================================
+        let dotaData = [
+            { cat: 'arcana', name: 'Manifold Paradox (PA Arcana)', buy: 24.50, sell: 32.00, liquidity: '120/д' },
+            { cat: 'arcana', name: 'Feast of Abscession (Pudge Arcana)', buy: 22.00, sell: 29.50, liquidity: '95/д' },
+            { cat: 'arcana', name: 'Bladeform Legacy (Juggernaut)', buy: 28.00, sell: 36.00, liquidity: '80/д' },
+            { cat: 'arcana', name: 'Tempest Helm (Zeus Arcana)', buy: 25.00, sell: 33.00, liquidity: '70/д' },
+            { cat: 'immortal', name: 'Codicil of the Veiled Ones (PA)', buy: 12.00, sell: 17.50, liquidity: '200/д' },
+            { cat: 'immortal', name: 'Golden Basher Blades (AM)', buy: 18.00, sell: 25.00, liquidity: '150/д' },
+            { cat: 'treasure', name: 'Immortal Treasure I (2024)', buy: 1.80, sell: 2.50, liquidity: '500/д' },
+            { cat: 'treasure', name: 'Sullen Harvest (Necrophos)', buy: 3.50, sell: 5.20, liquidity: '300/д' }
+        ];
+
+        // ==========================================
+        // PRO-СИСТЕМА
+        // ==========================================
+        function checkProStatus() {
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+            const lock = document.getElementById('dota-lock');
+            if (lock) lock.style.display = isPro ? 'none' : 'flex';
+            return isPro;
+        }
+
+        window.unlockPro = function() {
+            const key = document.getElementById('pro-key-dota').value.trim();
+            if (key === 'VALVE2026' || key.startsWith('VH-PRO-')) {
+                localStorage.setItem('valvehub_pro_unlocked', 'true');
+                checkProStatus();
+                renderDotaTable(document.querySelector('#dota-filters .chip.active').dataset.cat);
+                alert('✅ PRO-доступ активирован!');
+            } else {
+                alert('❌ Неверный ключ. Используйте VALVE2026');
+            }
+        };
+
+        document.getElementById('btn-reset-pro').addEventListener('click', () => {
+            localStorage.removeItem('valvehub_pro_unlocked');
+            checkProStatus();
+            renderDotaTable('all');
+            alert('PRO-доступ сброшен.');
+        });
+
+        // ==========================================
+        // БЛОК 1: ТАБЛИЦА DOTA
+        // ==========================================
+        function renderDotaTable(filter = 'all') {
+            const tbody = document.getElementById('dota-tbody');
+            tbody.innerHTML = '';
+            const budget = parseFloat(document.getElementById('dota-budget').value) || 100;
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+
+            dotaData.forEach((d) => {
+                if (filter !== 'all' && d.cat !== filter) return;
+
+                const steamNet = d.sell * 0.8695; // -15%
+                const profit = steamNet - d.buy;
+                const roi = (profit / d.buy) * 100;
+                const isGood = roi > 0;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${d.name}</td>
+                    <td>${d.buy.toFixed(2)} $</td>
+                    <td>${steamNet.toFixed(2)} $</td>
+                    <td>${d.liquidity}</td>
+                    <td><span class="profit-green">+${profit.toFixed(2)} $</span><br><span class="roi-badge">+${roi.toFixed(1)}%</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Применяем blur
+            if (!isPro) {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, i) => {
+                    if (i >= 2) row.style.filter = 'blur(5px)';
+                });
+            }
+        }
+
+        document.querySelectorAll('#dota-filters .chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('#dota-filters .chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                renderDotaTable(chip.dataset.cat);
+            });
+        });
+
+        document.getElementById('btn-recalc-dota').addEventListener('click', () => {
+            renderDotaTable(document.querySelector('#dota-filters .chip.active').dataset.cat);
+        });
+
+        document.getElementById('btn-add-dota').addEventListener('click', () => {
+            const name = prompt('Название предмета:');
+            if (!name) return;
+            const buy = parseFloat(prompt('Цена на маркете ($):'));
+            if (isNaN(buy) || buy <= 0) return;
+            const sell = parseFloat(prompt('Цена в Steam ($):'));
+            if (isNaN(sell) || sell <= 0) return;
+            const liq = prompt('Ликвидность (например, 100/д):') || '0/д';
+            
+            dotaData.push({ cat: 'all', name, buy, sell, liquidity: liq });
+            renderDotaTable('all');
+            alert('Связка добавлена!');
+        });
+
+        // ==========================================
+        // БЛОК 2: КАЛЬКУЛЯТОР СОКРОВИЩНИЦ
+        // ==========================================
+        function calcTreasure() {
+            const price = parseFloat(document.getElementById('t-price').value) || 2.50;
+            const count = parseInt(document.getElementById('t-count').value) || 15;
+            const cCommon = parseFloat(document.getElementById('t-common').value) || 0.50;
+            const cRare = parseFloat(document.getElementById('t-rare').value) || 8.00;
+            const cVRare = parseFloat(document.getElementById('t-very-rare').value) || 25.00;
+            const cUltra = parseFloat(document.getElementById('t-ultra-rare').value) || 120.00;
+
+            const cost = price * count;
+
+            // Шансы (система Dota 2: базовые шансы Rare ~1/50, Very Rare ~1/200, Ultra Rare ~1/1000)
+            // Но с каждым сундуком шанс нарастает (Escalating Odds)
+            // Упрощенная формула для EV:
+            // Средняя выплата с одного сундука = (обычный сет) + шанс_rare * цена_rare...
+            
+            // Примем средние шансы на 1 сундук:
+            const pRare = 1 / 50;     // 2%
+            const pVRare = 1 / 200;   // 0.5%
+            const pUltra = 1 / 1000;  // 0.1%
+
+            // Ожидаемая выплата с 1 сундука
+            const evPerChest = cCommon + (pRare * cRare) + (pVRare * cVRare) + (pUltra * cUltra);
+            const totalEV = evPerChest * count;
+
+            // Шанс выбить хотя бы 1 за N сундуков: 1 - (1 - p)^N
+            const chanceRare = (1 - Math.pow(1 - pRare, count)) * 100;
+            const chanceVRare = (1 - Math.pow(1 - pVRare, count)) * 100;
+            const chanceUltra = (1 - Math.pow(1 - pUltra, count)) * 100;
+
+            document.getElementById('t-cost').textContent = cost.toFixed(2) + ' $';
+            document.getElementById('t-chance-rare').textContent = chanceRare.toFixed(1) + '%';
+            document.getElementById('t-chance-vrare').textContent = chanceVRare.toFixed(1) + '%';
+            document.getElementById('t-chance-ultra').textContent = chanceUltra.toFixed(1) + '%';
+            document.getElementById('t-ev').textContent = totalEV.toFixed(2) + ' $';
+
+            const verdictEl = document.getElementById('t-verdict');
+            if (totalEV > cost) {
+                verdictEl.textContent = '✅ Открывать выгодно! (EV > Затрат)';
+                verdictEl.style.background = 'rgba(16, 185, 129, 0.2)';
+                verdictEl.style.color = 'var(--green)';
+            } else {
+                verdictEl.textContent = '❌ Выгоднее купить сет напрямую';
+                verdictEl.style.background = 'rgba(239, 68, 68, 0.2)';
+                verdictEl.style.color = 'var(--red)';
+            }
+        }
+
+        // Слушатели
+        ['t-price', 't-count', 't-common', 't-rare', 't-very-rare', 't-ultra-rare'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcTreasure);
+        });
+
+        // ==========================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ==========================================
+        window.onload = function() {
+            checkProStatus();
+            renderDotaTable();
+            calcTreasure();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер валют TF2 | VALVE HUB</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Шапка (меню подставит nav.js) -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Конвертер Team Fortress 2</h1>
+            <p style="color: var(--text-muted);">Двусторонний перевод между ключами, металлом и валютами.</p>
+        </div>
+
+        <section class="calculator-section">
+            <h2 class="calc-title">⚙️ Настройки курса</h2>
+            <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group">
+                    <label>1 Key в Refined</label>
+                    <input type="number" id="rate-key-ref" value="68.55" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>1 Key в USD</label>
+                    <input type="number" id="rate-key-usd" value="1.85" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>1 Key в RUB</label>
+                    <input type="number" id="rate-key-rub" value="175.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>1 Key в BYN</label>
+                    <input type="number" id="rate-key-byn" value="5.90" step="0.01">
+                </div>
+            </div>
+        </section>
+
+        <section class="calculator-section">
+            <h2 class="calc-title">💱 Конвертер</h2>
+            
+            <div class="form-row">
+                <div>
+                    <div class="form-group">
+                        <label style="color: var(--gold); font-weight: 700;">🔑 Ключи (Keys)</label>
+                        <input type="number" id="in-keys" value="1" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Refined (Ref)</label>
+                        <input type="number" id="in-ref" value="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Reclaimed (Rec)</label>
+                        <input type="number" id="in-rec" value="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Scrap</label>
+                        <input type="number" id="in-scrap" value="0" step="0.01">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="form-group">
+                        <label style="color: var(--green); font-weight: 700;">💵 USD</label>
+                        <input type="number" id="in-usd" value="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>RUB</label>
+                        <input type="number" id="in-rub" value="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>BYN</label>
+                        <input type="number" id="in-byn" value="0" step="0.01">
+                    </div>
+                    
+                    <div class="results-box" style="margin-top: 15px; padding: 15px;">
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.8;">
+                            <b>Памятка:</b><br>
+                            1 Key = <span id="memo-key" class="text-gold">0</span> Ref<br>
+                            1 Ref = 3 Rec = 9 Scrap
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB. Инструменты для трейдеров и игроков.</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            let rates = {
+                keyRef: 68.55,
+                keyUsd: 1.85,
+                keyRub: 175.00,
+                keyByn: 5.90
+            };
+            
+            try {
+                const saved = localStorage.getItem('tf2_rates');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.keyRef) rates.keyRef = parsed.keyRef;
+                    if (parsed.keyUsd) rates.keyUsd = parsed.keyUsd;
+                    if (parsed.keyRub) rates.keyRub = parsed.keyRub;
+                    if (parsed.keyByn) rates.keyByn = parsed.keyByn;
+                }
+            } catch (e) {}
+
+            document.getElementById('rate-key-ref').value = rates.keyRef;
+            document.getElementById('rate-key-usd').value = rates.keyUsd;
+            document.getElementById('rate-key-rub').value = rates.keyRub;
+            document.getElementById('rate-key-byn').value = rates.keyByn;
+            document.getElementById('memo-key').textContent = rates.keyRef;
+
+            function updateAllFromKeys() {
+                const keys = parseFloat(document.getElementById('in-keys').value) || 0;
+                
+                document.getElementById('in-ref').value = (keys * rates.keyRef).toFixed(2);
+                document.getElementById('in-rec').value = (keys * rates.keyRef * 3).toFixed(2);
+                document.getElementById('in-scrap').value = (keys * rates.keyRef * 9).toFixed(2);
+                
+                document.getElementById('in-usd').value = (keys * rates.keyUsd).toFixed(2);
+                document.getElementById('in-rub').value = (keys * rates.keyRub).toFixed(2);
+                document.getElementById('in-byn').value = (keys * rates.keyByn).toFixed(2);
+            }
+
+            function convert(sourceId) {
+                let keys = 0;
+                if (sourceId === 'in-keys') {
+                    keys = parseFloat(document.getElementById('in-keys').value) || 0;
+                } else if (sourceId === 'in-ref') {
+                    keys = (parseFloat(document.getElementById('in-ref').value) || 0) / rates.keyRef;
+                    document.getElementById('in-keys').value = keys.toFixed(4);
+                } else if (sourceId === 'in-rec') {
+                    keys = ((parseFloat(document.getElementById('in-rec').value) || 0) / 3) / rates.keyRef;
+                    document.getElementById('in-keys').value = keys.toFixed(4);
+                } else if (sourceId === 'in-scrap') {
+                    keys = ((parseFloat(document.getElementById('in-scrap').value) || 0) / 9) / rates.keyRef;
+                    document.getElementById('in-keys').value = keys.toFixed(4);
+                } else if (sourceId === 'in-usd') {
+                    keys = (parseFloat(document.getElementById('in-usd').value) || 0) / rates.keyUsd;
+                    document.getElementById('in-keys').value = keys.toFixed(4);
+                } else if (sourceId === 'in-rub') {
+                    keys = (parseFloat(document.getElementById('in-rub').value) || 0) / rates.keyRub;
+                    document.getElementById('in-keys').value = keys.toFixed(4);
+                } else if (sourceId === 'in-byn') {
+                    keys = (parseFloat(document.getElementById('in-byn').value) || 0) / rates.keyByn;
+                    document.getElementById('in-keys').value = keys.toFixed(4);
+                }
+                updateAllFromKeys();
+            }
+
+            function updateRates() {
+                rates.keyRef = parseFloat(document.getElementById('rate-key-ref').value) || 68.55;
+                rates.keyUsd = parseFloat(document.getElementById('rate-key-usd').value) || 1.85;
+                rates.keyRub = parseFloat(document.getElementById('rate-key-rub').value) || 175;
+                rates.keyByn = parseFloat(document.getElementById('rate-key-byn').value) || 5.90;
+
+                localStorage.setItem('tf2_rates', JSON.stringify(rates));
+                document.getElementById('memo-key').textContent = rates.keyRef;
+                
+                convert('in-keys');
+            }
+
+            ['in-keys', 'in-ref', 'in-rec', 'in-scrap', 'in-usd', 'in-rub', 'in-byn'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => convert(id));
+            });
+
+            ['rate-key-ref', 'rate-key-usd', 'rate-key-rub', 'rate-key-byn'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateRates);
+            });
+
+            convert('in-keys');
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

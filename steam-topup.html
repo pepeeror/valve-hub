@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор пополнения Steam и комиссий | VALVE HUB</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Шапка (меню подставит nav.js) -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Калькуляторы Steam</h1>
+            <p style="color: var(--text-muted);">Инструменты для выгодного пополнения и расчета комиссий.</p>
+        </div>
+
+        <section class="calculator-section">
+            <h2 class="calc-title">📈 Блок А: Пополнение баланса Steam в «+»</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ваш бюджет</label>
+                    <input type="number" id="budget" value="1000" step="1" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Комиссия посредника (для сравнения), %</label>
+                    <input type="number" id="proxy-fee" value="10" step="0.1" min="0">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена предмета на маркете</label>
+                    <input type="number" id="market-price" value="150" step="0.01" min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Цена продажи на ТП Steam</label>
+                    <input type="number" id="steam-price" value="200" step="0.01" min="0.01">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Комиссия площадки Steam, %</label>
+                <select id="steam-fee-select">
+                    <option value="15">15% (стандартная)</option>
+                    <option value="13">13% (расчет от базы)</option>
+                </select>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Купить предметов на бюджет:</span>
+                    <span id="items-count" class="text-gold">0 шт.</span>
+                </div>
+                <div class="result-row">
+                    <span>Чистыми придет на Steam:</span>
+                    <span id="steam-receive">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Сравнение с посредником:</span>
+                    <span id="proxy-compare" style="font-size: 14px; color: var(--text-muted);">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Итоговая выгода:</span>
+                    <span id="profit-result">0%</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="calculator-section" id="fees">
+            <h2 class="calc-title">🧮 Блок Б: Точный калькулятор комиссии ТП</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена для покупателя (на ТП)</label>
+                    <input type="number" id="calc-buyer-price" value="100" step="0.01" min="0.03">
+                </div>
+                <div class="form-group">
+                    <label>Вы получите на баланс (Продавец)</label>
+                    <input type="number" id="calc-seller-receive" value="85.71" step="0.01" min="0.01">
+                </div>
+            </div>
+            
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Комиссия Steam (5%):</span>
+                    <span id="fee-steam">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Комиссия игры (10%):</span>
+                    <span id="fee-game">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Общая комиссия:</span>
+                    <span id="fee-total" class="text-red">0.00</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB. Инструменты для трейдеров и игроков.</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            function calcTopup() {
+                const budgetEl = document.getElementById('budget');
+                const marketEl = document.getElementById('market-price');
+                const steamEl = document.getElementById('steam-price');
+                const feeEl = document.getElementById('steam-fee-select');
+                const proxyEl = document.getElementById('proxy-fee');
+
+                if (!budgetEl || !marketEl || !steamEl || !feeEl || !proxyEl) return;
+
+                const budget = parseFloat(budgetEl.value) || 0;
+                const marketPrice = parseFloat(marketEl.value) || 0.01;
+                const steamPrice = parseFloat(steamEl.value) || 0.01;
+                const steamFeePct = parseFloat(feeEl.value) || 15;
+                const proxyFeePct = parseFloat(proxyEl.value) || 0;
+
+                const itemsCount = Math.floor(budget / marketPrice);
+                const netSteamPrice = steamPrice * (1 - (steamFeePct / 100));
+                const totalSteamReceive = itemsCount * netSteamPrice;
+                const proxyReceive = budget * (1 - (proxyFeePct / 100));
+                const profitPct = budget > 0 ? ((totalSteamReceive - budget) / budget) * 100 : 0;
+
+                document.getElementById('items-count').textContent = itemsCount + ' шт.';
+                document.getElementById('steam-receive').textContent = totalSteamReceive.toFixed(2);
+                document.getElementById('proxy-compare').textContent = `Через посредника: ${proxyReceive.toFixed(2)} (разница: ${(totalSteamReceive - proxyReceive).toFixed(2)})`;
+
+                const profitEl = document.getElementById('profit-result');
+                profitEl.textContent = (profitPct > 0 ? '+' : '') + profitPct.toFixed(2) + '% к балансу';
+                profitEl.style.color = profitPct > 0 ? 'var(--green)' : 'var(--red)';
+            }
+
+            function calcFeesFromBuyer() {
+                const buyerEl = document.getElementById('calc-buyer-price');
+                const sellerEl = document.getElementById('calc-seller-receive');
+                if (!buyerEl || !sellerEl) return;
+
+                const buyerPrice = parseFloat(buyerEl.value) || 0;
+                if (buyerPrice === 0) return;
+
+                let sellerReceive = (buyerPrice / 1.15) - 0.01;
+                if (sellerReceive < 0) sellerReceive = 0;
+                const sellerRounded = Math.round(sellerReceive * 100) / 100;
+
+                sellerEl.value = sellerRounded.toFixed(2);
+
+                let feeSteam = Math.round((sellerRounded + 0.01) * 0.05 * 100) / 100;
+                let feeGame = Math.round((sellerRounded + 0.01) * 0.10 * 100) / 100;
+                const totalFee = buyerPrice - sellerRounded;
+
+                document.getElementById('fee-steam').textContent = feeSteam.toFixed(2);
+                document.getElementById('fee-game').textContent = feeGame.toFixed(2);
+                document.getElementById('fee-total').textContent = totalFee.toFixed(2);
+            }
+
+            function calcFeesFromSeller() {
+                const buyerEl = document.getElementById('calc-buyer-price');
+                const sellerEl = document.getElementById('calc-seller-receive');
+                if (!buyerEl || !sellerEl) return;
+
+                const sellerReceive = parseFloat(sellerEl.value) || 0;
+                if (sellerReceive === 0) return;
+
+                let buyerPrice = (sellerReceive + 0.01) * 1.15;
+                const buyerRounded = Math.round(buyerPrice * 100) / 100;
+
+                buyerEl.value = buyerRounded.toFixed(2);
+
+                let feeSteam = Math.round((sellerReceive + 0.01) * 0.05 * 100) / 100;
+                let feeGame = Math.round((sellerReceive + 0.01) * 0.10 * 100) / 100;
+                const totalFee = buyerRounded - sellerReceive;
+
+                document.getElementById('fee-steam').textContent = feeSteam.toFixed(2);
+                document.getElementById('fee-game').textContent = feeGame.toFixed(2);
+                document.getElementById('fee-total').textContent = totalFee.toFixed(2);
+            }
+
+            document.getElementById('budget').addEventListener('input', calcTopup);
+            document.getElementById('market-price').addEventListener('input', calcTopup);
+            document.getElementById('steam-price').addEventListener('input', calcTopup);
+            document.getElementById('steam-fee-select').addEventListener('change', calcTopup);
+            document.getElementById('proxy-fee').addEventListener('input', calcTopup);
+
+            document.getElementById('calc-buyer-price').addEventListener('input', calcFeesFromBuyer);
+            document.getElementById('calc-seller-receive').addEventListener('input', calcFeesFromSeller);
+
+            calcTopup();
+            calcFeesFromBuyer();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

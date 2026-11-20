@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dota 2 Инструменты: ММР, Винрейт и Конфиги | VALVE HUB</title>
+    <meta name="description" content="Калькулятор ММР и рангов Dota 2, расчет необходимого винрейта и генератор конфига autoexec.cfg с биндами камеры на руны.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .progress-container {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .progress-track {
+            height: 12px;
+            background: var(--bg-input);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #8b5cf6);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        .rank-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 14px;
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--gold);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            margin-bottom: 10px;
+        }
+        .code-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #c9d1d9;
+            white-space: pre-wrap;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: var(--bg-input);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        .checkbox-item small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: 800; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Инструменты Dota 2</h1>
+            <p style="color: var(--text-muted);">Калькулятор ММР, анализ винрейта и генератор конфигурации.</p>
+        </div>
+
+        <!-- БЛОК 1: Калькулятор ММР -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📈 Блок 1: Калькулятор ММР и Рангов</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Текущий ММР</label>
+                    <input type="number" id="mmr-current" value="2850" min="0" max="15000" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Целевой ММР</label>
+                    <input type="number" id="mmr-target" value="4620" min="0" max="15000" step="1">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Прирост за победу</label>
+                    <select id="mmr-gain">
+                        <option value="25">Обычный матч (+25 MMR)</option>
+                        <option value="50">Двойная ставка (+50 MMR)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ваш текущий винрейт (%)</label>
+                    <input type="number" id="mmr-winrate" value="55" min="0" max="100" step="0.1">
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div style="margin-bottom: 10px;">
+                    <span class="rank-badge" id="current-rank-badge">Ранг: —</span>
+                </div>
+                
+                <div class="grid-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">До след. звезды</div>
+                        <div class="stat-value" id="mmr-to-next" style="color: var(--accent);">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Побед до цели</div>
+                        <div class="stat-value" id="wins-to-target" style="color: var(--green);">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Матчей до цели</div>
+                        <div class="stat-value" id="matches-to-target" style="color: var(--gold);">0</div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="rank-progress-bar"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>Прогресс ранга</span>
+                        <span id="rank-progress-pct">0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Калькулятор винрейта -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📊 Блок 2: Калькулятор Винрейта</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Всего сыграно матчей</label>
+                    <input type="number" id="wr-total" value="2500" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Целевой винрейт (%)</label>
+                    <input type="number" id="wr-target" value="51.0" min="0" max="100" step="0.1">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Текущий винрейт (%)</label>
+                    <input type="number" id="wr-current" value="49.2" min="0" max="100" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Текущие победы (авто)</label>
+                    <input type="number" id="wr-wins" value="1230" min="0" step="1">
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Текущие поражения:</span>
+                    <span id="wr-losses" style="color: var(--red); font-weight: 600;">0</span>
+                </div>
+                <div class="result-row" style="font-size: 18px;">
+                    <span>Нужно побед подряд:</span>
+                    <span id="wr-needed" class="text-green" style="font-size: 24px;">0</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px; text-align: center;">
+                    * Если значение слишком большое, значит цель математически недостижима при таком количестве матчей.
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 3: Конструктор конфига Dota 2 -->
+        <section class="calculator-section">
+            <h2 class="calc-title">⚙️ Блок 3: Конструктор autoexec.cfg для Dota 2</h2>
+            
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-runes" checked>
+                    <label for="cfg-runes">Быстрый осмотр рун на F1 и F2
+                        <small>При нажатии камера летит на руну, при отпускании — возвращается к герою.</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-deny" checked>
+                    <label for="cfg-deny">Принудительная атака (денай правой кнопкой)
+                        <small>dota_force_right_click_attack 1</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-opt" checked>
+                    <label for="cfg-opt">Оптимизация и отключение тряски экрана
+                        <small>dota_screen_shake 0; fps_max 0</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-cast" checked>
+                    <label for="cfg-cast">Умное применение предметов и способностей
+                        <small>dota_ability_quick_cast 1; dota_smart_doubletap 1</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-range" checked>
+                    <label for="cfg-range">Показывать дальность способностей
+                        <small>dota_disable_range_finder 0</small>
+                    </label>
+                </div>
+            </div>
+
+            <label style="margin-top: 10px; display: block;">Предпросмотр autoexec.cfg:</label>
+            <div class="code-box" id="dota-cfg-output">// Ваш конфиг</div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btn-download-dota-cfg" class="btn" style="flex: 1;">💾 Скачать autoexec.cfg</button>
+                <button id="btn-copy-dota-cfg" class="btn" style="flex: 1; background: rgba(59, 130, 246, 0.1); color: var(--accent); border-color: rgba(59, 130, 246, 0.2);">📋 Скопировать конфиг</button>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ по Dota 2</h2>
+            <div class="faq-item">
+                <h3>Куда закинуть файл autoexec.cfg в Dota 2?</h3>
+                <p>Путь к папке: <code>...\Steam\steamapps\common\dota 2 beta\game\dota\cfg</code>. Создайте там файл <code>autoexec.cfg</code> (обязательно в кодировке UTF-8) и вставьте сгенерированный код. В настройках запуска Steam добавьте команду <code>-console</code>, чтобы активировать консоль, или просто перезапустите игру.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Как работает система двойной ставки ММР (Double Down)?</h3>
+                <p>В Dota 2 вы можете активировать жетон двойной ставки перед началом матча. Если вы выиграете, то получите +50 ММР вместо +25. Если проиграете — потеряете 50 ММР. Жетоны выдаются раз в неделю или покупаются в магазине.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            // ==========================================
+            // БЛОК 1: ЛОГИКА РАНГОВ
+            // ==========================================
+            function getRankInfo(mmr) {
+                if (mmr >= 5620) return { name: 'Титан (Immortal)', next: null, base: 5620, max: 99999, step: 0 };
+                
+                if (mmr >= 4620) {
+                    const stars = Math.floor((mmr - 4620) / 200) + 1;
+                    return { name: `Божество ${stars} (Divine ${stars})`, next: 4620 + stars * 200, base: 4620 + (stars - 1) * 200, max: 4620 + stars * 200, step: 200 };
+                }
+                
+                if (mmr >= 3850) {
+                    const stars = Math.floor((mmr - 3850) / 154) + 1;
+                    return { name: `Властелин ${stars} (Ancient ${stars})`, next: 3850 + stars * 154, base: 3850 + (stars - 1) * 154, max: 3850 + stars * 154, step: 154 };
+                }
+                
+                if (mmr >= 3080) {
+                    const stars = Math.floor((mmr - 3080) / 154) + 1;
+                    return { name: `Легенда ${stars} (Legend ${stars})`, next: 3080 + stars * 154, base: 3080 + (stars - 1) * 154, max: 3080 + stars * 154, step: 154 };
+                }
+                
+                if (mmr >= 2310) {
+                    const stars = Math.floor((mmr - 2310) / 154) + 1;
+                    return { name: `Герой ${stars} (Archon ${stars})`, next: 2310 + stars * 154, base: 2310 + (stars - 1) * 154, max: 2310 + stars * 154, step: 154 };
+                }
+                
+                if (mmr >= 1540) {
+                    const stars = Math.floor((mmr - 1540) / 154) + 1;
+                    return { name: `Рыцарь ${stars} (Crusader ${stars})`, next: 1540 + stars * 154, base: 1540 + (stars - 1) * 154, max: 1540 + stars * 154, step: 154 };
+                }
+                
+                if (mmr >= 770) {
+                    const stars = Math.floor((mmr - 770) / 154) + 1;
+                    return { name: `Страж ${stars} (Guardian ${stars})`, next: 770 + stars * 154, base: 770 + (stars - 1) * 154, max: 770 + stars * 154, step: 154 };
+                }
+                
+                const stars = Math.floor(mmr / 154) + 1;
+                return { name: `Рекрут ${stars} (Herald ${stars})`, next: stars * 154, base: (stars - 1) * 154, max: stars * 154, step: 154 };
+            }
+
+            function calcMMR() {
+                const current = parseFloat(document.getElementById('mmr-current').value) || 0;
+                const target = parseFloat(document.getElementById('mmr-target').value) || 0;
+                const gain = parseFloat(document.getElementById('mmr-gain').value) || 25;
+                const winrate = parseFloat(document.getElementById('mmr-winrate').value) || 0;
+
+                const rank = getRankInfo(current);
+                document.getElementById('current-rank-badge').textContent = `Текущий ранг: ${rank.name}`;
+
+                // Прогресс до следующей звезды
+                let progressPct = 0;
+                let toNext = 0;
+                
+                if (rank.name.includes('Immortal')) {
+                    progressPct = 100;
+                    toNext = 0;
+                    document.getElementById('rank-progress-pct').textContent = 'MAX';
+                } else {
+                    const currentInStep = current - rank.base;
+                    const stepSize = rank.max - rank.base;
+                    progressPct = Math.max(0, Math.min(100, (currentInStep / stepSize) * 100));
+                    toNext = rank.next - current;
+                    document.getElementById('rank-progress-pct').textContent = progressPct.toFixed(0) + '%';
+                }
+
+                document.getElementById('rank-progress-bar').style.width = progressPct + '%';
+                document.getElementById('mmr-to-next').textContent = toNext;
+
+                // Расчет побед до цели
+                const mmrDiff = target - current;
+                let winsNeeded = 0;
+                let matchesNeeded = 0;
+
+                if (mmrDiff > 0) {
+                    winsNeeded = Math.ceil(mmrDiff / gain);
+                    if (winrate > 50) {
+                        // Формула: (Winrate * Matches) - ((100 - Winrate) * Matches) = Wins * Winrate... 
+                        // Проще: Матчи = Победы / (2 * Winrate/100 - 1)
+                        const wrFactor = (winrate / 100) - (1 - (winrate / 100)); // Превышение винрейта над 50%
+                        matchesNeeded = Math.ceil(winsNeeded / wrFactor);
+                    } else {
+                        matchesNeeded = -1; // Недостижимо
+                    }
+                }
+
+                document.getElementById('wins-to-target').textContent = winsNeeded > 0 ? winsNeeded : '0';
+                document.getElementById('matches-to-target').textContent = matchesNeeded > 0 ? matchesNeeded : (mmrDiff > 0 ? '∞' : '0');
+            }
+
+            document.getElementById('mmr-current').addEventListener('input', calcMMR);
+            document.getElementById('mmr-target').addEventListener('input', calcMMR);
+            document.getElementById('mmr-gain').addEventListener('change', calcMMR);
+            document.getElementById('mmr-winrate').addEventListener('input', calcMMR);
+
+            // ==========================================
+            // БЛОК 2: КАЛЬКУЛЯТОР ВИНРЕЙТА
+            // ==========================================
+            function calcWinrate(source) {
+                const total = parseFloat(document.getElementById('wr-total').value) || 1;
+                const targetWr = parseFloat(document.getElementById('wr-target').value) || 0;
+                const currWr = parseFloat(document.getElementById('wr-current').value) || 0;
+                
+                let wins = parseFloat(document.getElementById('wr-wins').value) || 0;
+
+                if (source === 'percent') {
+                    wins = Math.round(total * (currWr / 100));
+                    document.getElementById('wr-wins').value = wins;
+                } else if (source === 'wins') {
+                    const newWr = (wins / total) * 100;
+                    document.getElementById('wr-current').value = newWr.toFixed(1);
+                }
+
+                const losses = total - wins;
+                document.getElementById('wr-losses').textContent = losses;
+
+                // Точная формула для стрика побед
+                // wins_needed = ceil((target_wr * total_matches - 100 * current_wins) / (100 - target_wr))
+                let needed = 0;
+                if (targetWr > currWr && targetWr < 100) {
+                    needed = Math.ceil((targetWr * total - 100 * wins) / (100 - targetWr));
+                }
+                
+                document.getElementById('wr-needed').textContent = needed > 0 ? needed : '0';
+            }
+
+            document.getElementById('wr-total').addEventListener('input', () => calcWinrate('percent'));
+            document.getElementById('wr-current').addEventListener('input', () => calcWinrate('percent'));
+            document.getElementById('wr-wins').addEventListener('input', () => calcWinrate('wins'));
+            document.getElementById('wr-target').addEventListener('input', () => calcWinrate('percent'));
+
+            // ==========================================
+            // БЛОК 3: КОНСТРУКТОР КОНФИГА DOTA 2
+            // ==========================================
+            function generateDotaCfg() {
+                let lines = ['// Autoexec.cfg for Dota 2 generated by VALVE HUB', '// Date: ' + new Date().toLocaleDateString(), ''];
+
+                if (document.getElementById('cfg-runes').checked) {
+                    lines.push(
+                        '// Камера на руны',
+                        'alias "rune_top" "dota_camera_set_lookatpos -2273 1800"',
+                        'alias "rune_bot" "dota_camera_set_lookatpos 3035 -2350"',
+                        'alias "+top_rune" "rune_top"',
+                        'alias "-top_rune" "dota_camera_set_lookatpos 0 0"',
+                        'alias "+bot_rune" "rune_bot"',
+                        'alias "-bot_rune" "dota_camera_set_lookatpos 0 0"',
+                        'bind "F1" "+top_rune"',
+                        'bind "F2" "+bot_rune"',
+                        ''
+                    );
+                }
+                if (document.getElementById('cfg-deny').checked) {
+                    lines.push('// Денай правой кнопкой', 'dota_force_right_click_attack 1', '');
+                }
+                if (document.getElementById('cfg-opt').checked) {
+                    lines.push('// Оптимизация', 'dota_screen_shake 0', 'fps_max 0', 'engine_no_focus_sleep 0', '');
+                }
+                if (document.getElementById('cfg-cast').checked) {
+                    lines.push('// Быстрый каст', 'dota_ability_quick_cast 1', 'dota_smart_doubletap 1', '');
+                }
+                if (document.getElementById('cfg-range').checked) {
+                    lines.push('// Дальность способностей', 'dota_disable_range_finder 0', '');
+                }
+
+                lines.push('// Конец конфига');
+                
+                const result = lines.join('\n');
+                document.getElementById('dota-cfg-output').textContent = result;
+                return result;
+            }
+
+            document.querySelectorAll('.checkbox-item input').forEach(el => {
+                el.addEventListener('change', generateDotaCfg);
+            });
+
+            document.getElementById('btn-copy-dota-cfg').addEventListener('click', () => {
+                const text = document.getElementById('dota-cfg-output').textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('btn-copy-dota-cfg');
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ Скопировано!';
+                    btn.style.background = 'var(--green)';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            });
+
+            document.getElementById('btn-download-dota-cfg').addEventListener('click', () => {
+                const text = generateDotaCfg();
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'autoexec.cfg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // ==========================================
+            // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+            // ==========================================
+            calcMMR();
+            calcWinrate('percent');
+            generateDotaCfg();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

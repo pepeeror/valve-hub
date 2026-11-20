@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оценка инвентаря Steam и сравнение выплат | VALVE HUB</title>
+    <meta name="description" content="Узнайте реальную стоимость вашего инвентаря CS2, Dota 2, TF2 и сравните выплаты на торговых площадках Steam, Buff163, Lis-Skins, CS.MONEY и через ключи TF2.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .game-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .game-tab {
+            padding: 10px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .game-tab:hover { border-color: var(--accent); }
+        .game-tab.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .inventory-table th {
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        .inventory-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .inventory-table input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .inventory-table input:focus { border-color: var(--accent); outline: none; }
+        
+        .remove-item-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+            border: none;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .remove-item-btn:hover { background: var(--red); color: #fff; }
+
+        .platform-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .platform-card.best {
+            border-color: var(--green);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+        .best-badge {
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: var(--green);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .platform-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .platform-title { font-weight: 700; font-size: 15px; color: #fff; }
+        .platform-badge {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+            display: inline-block;
+        }
+        .platform-value { font-size: 20px; font-weight: 800; color: var(--gold); }
+        .platform-loss { font-size: 12px; color: var(--red); }
+        
+        .progress-track {
+            height: 6px;
+            background: var(--bg-card);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+        .platform-card.best .progress-fill { background: var(--green); }
+
+        .settings-panel {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .settings-panel.open { display: block; }
+        
+        .status-msg {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .status-msg.success { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); display: block; }
+        .status-msg.warning { background: rgba(245, 158, 11, 0.1); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.2); display: block; }
+        .status-msg.error { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); display: block; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Оценка инвентаря Steam и сравнение выплат</h1>
+            <p style="color: var(--text-muted);">Узнайте реальную стоимость ваших скинов и где выгоднее их продать.</p>
+        </div>
+
+        <!-- БЛОК 1: Инвентарь -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📦 Блок 1: Инвентарь</h2>
+
+            <div class="game-tabs" id="game-tabs">
+                <button class="game-tab active" data-appid="730">CS2 (AppID: 730)</button>
+                <button class="game-tab" data-appid="570">Dota 2 (AppID: 570)</button>
+                <button class="game-tab" data-appid="440">TF2 (AppID: 440)</button>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ссылка на профиль или SteamID64</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="steam-url" placeholder="steamcommunity.com/profiles/7656119..." style="flex: 1;">
+                        <button id="btn-load-inv" class="btn" style="width: auto; padding: 0 20px;">Загрузить</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="steam-status" class="status-msg"></div>
+
+            <div class="form-row" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);">
+                <div class="form-group">
+                    <label style="color: var(--gold); font-weight: 700;">Быстрый ввод общей стоимости (из Steam Inventory Helper)</label>
+                    <input type="number" id="quick-total" value="250.00" step="0.01" min="0">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button id="btn-calc-table" class="btn" style="width: 100%;">Пересчитать из таблицы</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="font-size: 16px; color: #fff;">Предметы в инвентаре</h3>
+                    <div>
+                        <button id="btn-add-item" class="btn" style="width: auto; padding: 6px 12px; font-size: 12px;">+ Добавить предмет</button>
+                        <button id="btn-clear-items" class="btn" style="width: auto; padding: 6px 12px; font-size: 12px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Очистить</button>
+                    </div>
+                </div>
+                
+                <table class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Название предмета</th>
+                            <th style="width: 80px;">Кол-во</th>
+                            <th style="width: 120px;">Цена за 1 шт. ($)</th>
+                            <th style="width: 100px;">Сумма ($)</th>
+                            <th style="width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-tbody">
+                        <!-- Заполняется через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Сравнение выплат -->
+        <section class="calculator-section">
+            <h2 class="calc-title">💰 Блок 2: Где выгоднее продать?</h2>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 16px; font-weight: 600;">
+                    Стоимость инвентаря в Steam: <span id="display-total-steam" style="color: var(--gold); font-size: 22px;">0.00 $</span>
+                </div>
+                <div>
+                    <label style="margin: 0; margin-right: 10px;">Валюта:</label>
+                    <select id="currency-select" style="width: auto; display: inline-block; padding: 5px 10px;">
+                        <option value="USD">USD $</option>
+                        <option value="RUB">RUB ₽</option>
+                        <option value="BYN">BYN</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btn-toggle-settings" class="btn" style="width: auto; font-size: 13px; padding: 8px 16px; margin-bottom: 15px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                ⚙️ Настроить коэффициенты площадок
+            </button>
+
+            <div id="settings-panel" class="settings-panel">
+                <h4 style="margin-bottom: 10px; color: #fff;">Коэффициенты и курсы</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Buff163 / CSFloat (% от Steam)</label>
+                        <input type="number" id="coeff-p2p" value="74" step="1" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Lis-Skins / Avan.Market (% от Steam)</label>
+                        <input type="number" id="coeff-instant" value="65" step="1" min="0" max="100">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CS.MONEY / Tradeit.gg (% от Steam)</label>
+                        <input type="number" id="coeff-trade" value="80" step="1" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Цена ключа TF2 в Steam ($)</label>
+                        <input type="number" id="tf2-key-steam" value="2.35" step="0.01" min="0.01">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Цена скупа ключа TF2 в реал ($)</label>
+                        <input type="number" id="tf2-key-real" value="1.78" step="0.01" min="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Курс USD → RUB</label>
+                        <input type="number" id="rate-usd-rub" value="95.00" step="0.1" min="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Курс USD → BYN</label>
+                    <input type="number" id="rate-usd-byn" value="3.25" step="0.01" min="0.01">
+                </div>
+                <button id="btn-save-settings" class="btn" style="width: auto; font-size: 12px;">Сохранить настройки</button>
+            </div>
+
+            <div id="platforms-container">
+                <!-- Карточки площадок заполняются через JS -->
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ по выводу средств</h2>
+            <div class="faq-item">
+                <h3>Почему стоимость инвентаря в Steam на 25–35% выше, чем реальные деньги при выводе на карту?</h3>
+                <p>Steam — это закрытая экосистема. Деньги на балансе Steam нельзя вывести на карту, их можно только тратить внутри магазина. Чтобы получить реальные деньги, трейдеры продают скины на сторонних P2P-площадках, где цена ниже из-за конкуренции, комиссий площадок и спроса. Средний курс вывода составляет 65–75% от цены в Steam.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Как открыть инвентарь Steam в настройках приватности?</h3>
+                <p>Зайдите в свой профиль Steam -> «Редактировать профиль» -> «Настройки приватности». Найдите пункт «Инвентарь» и установите значение «Открытый». Если инвентарь закрыт, сторонние сервисы не смогут считать стоимость предметов.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Как выгоднее всего вывести скины CS2 и Dota 2 в реальные деньги или криптовалюту (USDT) в 2026 году?</h3>
+                <p>Самый выгодный способ — продажа на P2P-площадках (Buff163, CSFloat), где выплата достигает 74-78% от цены Steam. Если нужна скорость, используйте автовыкуп (Lis-Skins, Avan.Market) с выплатой 65%, но деньги приходят за 5 минут. Схема с ключами TF2 хороша для вывода, если у вас есть время на покупку и продажу ключей.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            // ==========================================
+            // БАЗОВЫЕ ДАННЫЕ И СОСТОЯНИЕ
+            // ==========================================
+            let currentAppId = 730;
+            let currentCurrency = 'USD';
+            let items = [
+                { name: 'AK-47 | Redline (FT)', qty: 1, price: 22.50 },
+                { name: 'AWP | Asiimov (FT)', qty: 1, price: 115.00 },
+                { name: 'Кейс «Грёзы и кошмары»', qty: 15, price: 1.45 }
+            ];
+            
+            const DEFAULT_SETTINGS = {
+                p2p: 74,
+                instant: 65,
+                trade: 80,
+                keySteam: 2.35,
+                keyReal: 1.78,
+                usdRub: 95.00,
+                usdByn: 3.25
+            };
+            
+            let settings = { ...DEFAULT_SETTINGS };
+
+            // Загрузка настроек
+            try {
+                const saved = localStorage.getItem('valvehub_inv_settings');
+                if (saved) settings = { ...settings, ...JSON.parse(saved) };
+            } catch(e) {}
+
+            // Установка значений в поля настроек
+            function applySettingsToUI() {
+                document.getElementById('coeff-p2p').value = settings.p2p;
+                document.getElementById('coeff-instant').value = settings.instant;
+                document.getElementById('coeff-trade').value = settings.trade;
+                document.getElementById('tf2-key-steam').value = settings.keySteam;
+                document.getElementById('tf2-key-real').value = settings.keyReal;
+                document.getElementById('rate-usd-rub').value = settings.usdRub;
+                document.getElementById('rate-usd-byn').value = settings.usdByn;
+            }
+
+            // ==========================================
+            // БЛОК 1: ТАБЛИЦА ПРЕДМЕТОВ
+            // ==========================================
+            function renderTable() {
+                const tbody = document.getElementById('items-tbody');
+                tbody.innerHTML = '';
+                
+                items.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    const sum = (item.qty * item.price).toFixed(2);
+                    
+                    tr.innerHTML = `
+                        <td><input type="text" value="${item.name}" data-index="${index}" data-field="name"></td>
+                        <td><input type="number" value="${item.qty}" min="1" step="1" data-index="${index}" data-field="qty"></td>
+                        <td><input type="number" value="${item.price.toFixed(2)}" min="0" step="0.01" data-index="${index}" data-field="price"></td>
+                        <td style="color: var(--gold); font-weight: 600;">${sum} $</td>
+                        <td><button class="remove-item-btn" data-index="${index}">✕</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Слушатели для инпутов
+                tbody.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const idx = parseInt(e.target.dataset.index);
+                        const field = e.target.dataset.field;
+                        if (field === 'name') items[idx].name = e.target.value;
+                        else if (field === 'qty') items[idx].qty = Math.max(1, parseInt(e.target.value) || 1);
+                        else if (field === 'price') items[idx].price = Math.max(0, parseFloat(e.target.value) || 0);
+                        
+                        // Обновляем только сумму в строке
+                        const tr = e.target.closest('tr');
+                        if (tr) {
+                            const sumCell = tr.cells[3];
+                            if (sumCell) sumCell.textContent = (items[idx].qty * items[idx].price).toFixed(2) + ' $';
+                        }
+                    });
+                });
+
+                // Слушатели для удаления
+                tbody.querySelectorAll('.remove-item-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const idx = parseInt(e.target.dataset.index);
+                        items.splice(idx, 1);
+                        renderTable();
+                        calcAll();
+                    });
+                });
+            }
+
+            document.getElementById('btn-add-item').addEventListener('click', () => {
+                items.push({ name: 'Новый предмет', qty: 1, price: 0 });
+                renderTable();
+                calcAll();
+            });
+
+            document.getElementById('btn-clear-items').addEventListener('click', () => {
+                items = [];
+                renderTable();
+                calcAll();
+            });
+
+            document.getElementById('btn-calc-table').addEventListener('click', () => {
+                calcAll();
+            });
+
+            // ==========================================
+            // ПЕРЕСЧЕТ И СРАВНЕНИЕ ПЛОЩАДОК
+            // ==========================================
+            function calcAll() {
+                // 1. Сумма из таблицы
+                let tableSum = 0;
+                items.forEach(i => tableSum += i.qty * i.price);
+                
+                // 2. Если пользователь ввел "Быстрый ввод", используем его
+                let quickVal = parseFloat(document.getElementById('quick-total').value);
+                let steamTotal = !isNaN(quickVal) && quickVal > 0 ? quickVal : tableSum;
+                
+                if (steamTotal <= 0) steamTotal = 0;
+
+                document.getElementById('display-total-steam').textContent = steamTotal.toFixed(2) + ' $';
+
+                // 3. Множители валют
+                let multiplier = 1;
+                let symbol = '$';
+                if (currentCurrency === 'RUB') { multiplier = settings.usdRub; symbol = '₽'; }
+                else if (currentCurrency === 'BYN') { multiplier = settings.usdByn; symbol = 'BYN'; }
+
+                // 4. Расчет площадок
+                // Steam (баланс): -15% от цены
+                const steamNet = steamTotal * 0.8695; // с учетом округлений Valve
+                
+                // P2P (Buff163)
+                const p2p = steamTotal * (settings.p2p / 100);
+                
+                // Instant (Lis-Skins)
+                const instant = steamTotal * (settings.instant / 100);
+                
+                // Trade (CS.MONEY)
+                const trade = steamTotal * (settings.trade / 100);
+                
+                // TF2 Keys
+                const keysCount = Math.floor(steamNet / settings.keySteam);
+                const keysTotal = keysCount * settings.keyReal;
+
+                // Массив площадок
+                let platforms = [
+                    { 
+                        name: 'Торговая площадка Steam', 
+                        desc: 'Только баланс Steam · Без вывода в реал', 
+                        value: steamNet, 
+                        type: 'steam'
+                    },
+                    { 
+                        name: 'Buff163 / CSFloat', 
+                        desc: 'Высший курс · P2P продажа', 
+                        value: p2p, 
+                        type: 'p2p'
+                    },
+                    { 
+                        name: 'Lis-Skins / Avan.Market', 
+                        desc: 'Вывод за 5 минут · Карты РБ/РФ и USDT', 
+                        value: instant, 
+                        type: 'instant'
+                    },
+                    { 
+                        name: 'CS.MONEY / Tradeit.gg', 
+                        desc: 'Обмен скинов · Без вывода', 
+                        value: trade, 
+                        type: 'trade'
+                    },
+                    { 
+                        name: 'Через ключи TF2', 
+                        desc: `Схема трейдеров · Надёжный вывод (${keysCount} шт.)`, 
+                        value: keysTotal, 
+                        type: 'keys'
+                    }
+                ];
+
+                // Сортируем по убыванию для поиска лучшего
+                const best = platforms.reduce((max, p) => p.value > max.value ? p : max, platforms[0]);
+
+                // Рендер карточек
+                const container = document.getElementById('platforms-container');
+                container.innerHTML = '';
+
+                platforms.forEach(p => {
+                    const isBest = (p.value === best.value && p.type !== 'steam');
+                    const lossPct = steamTotal > 0 ? ((steamTotal - p.value) / steamTotal * 100).toFixed(1) : '0.0';
+                    
+                    // Прогресс-бар (от 0 до 100% относительно Steam)
+                    const barWidth = steamTotal > 0 ? (p.value / steamTotal * 100) : 0;
+                    
+                    const displayValue = (p.value * multiplier).toFixed(2) + ' ' + symbol;
+                    const lossDisplay = p.type === 'steam' 
+                        ? 'Остается на балансе Steam' 
+                        : `Потеря: -${lossPct}%`;
+
+                    const div = document.createElement('div');
+                    div.className = 'platform-card' + (isBest ? ' best' : '');
+                    div.innerHTML = `
+                        ${isBest ? '<div class="best-badge">ЛУЧШИЙ ВЫВОД В РЕАЛ</div>' : ''}
+                        <div class="platform-header">
+                            <div>
+                                <div class="platform-title">${p.name}</div>
+                                <div class="platform-badge">${p.desc}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="platform-value" style="color: ${isBest ? 'var(--green)' : 'var(--gold)'}">${displayValue}</div>
+                                <div class="platform-loss">${lossDisplay}</div>
+                            </div>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${barWidth}%;"></div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            // ==========================================
+            // СОБЫТИЯ И НАСТРОЙКИ
+            // ==========================================
+            document.getElementById('quick-total').addEventListener('input', calcAll);
+            document.getElementById('currency-select').addEventListener('change', (e) => {
+                currentCurrency = e.target.value;
+                calcAll();
+            });
+
+            document.getElementById('btn-toggle-settings').addEventListener('click', () => {
+                const panel = document.getElementById('settings-panel');
+                panel.classList.toggle('open');
+            });
+
+            document.getElementById('btn-save-settings').addEventListener('click', () => {
+                settings.p2p = parseFloat(document.getElementById('coeff-p2p').value) || 74;
+                settings.instant = parseFloat(document.getElementById('coeff-instant').value) || 65;
+                settings.trade = parseFloat(document.getElementById('coeff-trade').value) || 80;
+                settings.keySteam = parseFloat(document.getElementById('tf2-key-steam').value) || 2.35;
+                settings.keyReal = parseFloat(document.getElementById('tf2-key-real').value) || 1.78;
+                settings.usdRub = parseFloat(document.getElementById('rate-usd-rub').value) || 95;
+                settings.usdByn = parseFloat(document.getElementById('rate-usd-byn').value) || 3.25;
+
+                localStorage.setItem('valvehub_inv_settings', JSON.stringify(settings));
+                calcAll();
+                
+                const btn = document.getElementById('btn-save-settings');
+                const orig = btn.textContent;
+                btn.textContent = '✅ Сохранено!';
+                btn.style.background = 'var(--green)';
+                btn.style.color = '#fff';
+                setTimeout(() => {
+                    btn.textContent = orig;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            });
+
+            // ==========================================
+            // БЛОК 1: ЗАГРУЗКА ИНВЕНТАРЯ STEAM
+            // ==========================================
+            document.querySelectorAll('.game-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentAppId = parseInt(tab.dataset.appid);
+                });
+            });
+
+            document.getElementById('btn-load-inv').addEventListener('click', async () => {
+                const urlInput = document.getElementById('steam-url').value.trim();
+                const statusEl = document.getElementById('steam-status');
+                
+                if (!urlInput) {
+                    statusEl.className = 'status-msg warning';
+                    statusEl.textContent = 'Пожалуйста, введите ссылку или SteamID64.';
+                    return;
+                }
+
+                // Извлечение SteamID64
+                const match = urlInput.match(/(7656119\d{10})/);
+                if (!match) {
+                    statusEl.className = 'status-msg warning';
+                    statusEl.textContent = 'Неверный формат. Пожалуйста, используйте цифровую ссылку (/profiles/7656119...) или введите предметы вручную.';
+                    return;
+                }
+
+                const steamId = match[1];
+                statusEl.className = 'status-msg';
+                statusEl.textContent = 'Загрузка...';
+                statusEl.style.display = 'block';
+
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`https://steamcommunity.com/inventory/${steamId}/${currentAppId}/2?l=russian&count=75`);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                try {
+                    const response = await fetch(proxyUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) throw new Error('Network error');
+                    
+                    const data = await response.json();
+                    
+                    if (!data || !data.assets || !data.descriptions) {
+                        throw new Error('Invalid data');
+                    }
+
+                    // Группировка по classid
+                    const grouped = {};
+                    data.assets.forEach(asset => {
+                        if (!grouped[asset.classid]) {
+                            grouped[asset.classid] = { count: 0, classid: asset.classid, instanceid: asset.instanceid };
+                        }
+                        grouped[asset.classid].count++;
+                    });
+
+                    const newItems = [];
+                    for (const key in grouped) {
+                        const g = grouped[key];
+                        const desc = data.descriptions.find(d => d.classid === g.classid && d.instanceid === g.instanceid);
+                        if (desc) {
+                            newItems.push({
+                                name: desc.market_hash_name || desc.name || 'Неизвестный предмет',
+                                qty: g.count,
+                                price: 0.00 // Пользователь должен вписать
+                            });
+                        }
+                    }
+
+                    if (newItems.length > 0) {
+                        items = newItems;
+                        renderTable();
+                        document.getElementById('quick-total').value = '0';
+                        calcAll();
+                        
+                        statusEl.className = 'status-msg success';
+                        statusEl.textContent = `Успешно загружено ${newItems.length} уникальных предметов! Пожалуйста, укажите их цены в таблице.`;
+                    } else {
+                        throw new Error('No items');
+                    }
+
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    statusEl.className = 'status-msg error';
+                    statusEl.textContent = 'Steam ограничил прямой доступ или инвентарь скрыт. Воспользуйтесь быстрым ручным калькулятором ниже!';
+                }
+            });
+
+            // ==========================================
+            // ИНИЦИАЛИЗАЦИЯ
+            // ==========================================
+            applySettingsToUI();
+            renderTable();
+            calcAll();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

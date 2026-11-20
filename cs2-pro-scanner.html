@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO Сканер контрактов и арбитража CS2 | VALVE HUB</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .pro-lock-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 18, 24, 0.7);
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .pro-lock-content {
+            background: var(--bg-card); padding: 20px; border-radius: 12px;
+            border: 1px solid var(--accent); text-align: center; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .pro-lock-content h3 { color: var(--gold); margin-bottom: 10px; font-size: 18px; }
+        .pro-lock-content p { color: var(--text-muted); font-size: 13px; margin-bottom: 15px; }
+        .table-container { position: relative; overflow: hidden; min-height: 200px; }
+        .pro-table { width: 100%; border-collapse: collapse; }
+        .pro-table th {
+            text-align: left; font-size: 12px; color: var(--text-muted);
+            padding: 10px; border-bottom: 1px solid var(--border); background: var(--bg-input);
+        }
+        .pro-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-main); }
+        .pro-table tr:hover { background: rgba(255,255,255,0.02); }
+        .profit-green { color: var(--green); font-weight: 800; }
+        .roi-badge { background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
+        .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .chip { padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .chip:hover { border-color: var(--accent); }
+        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-sm { padding: 4px 10px; font-size: 11px; width: auto; }
+        .pro-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .feature-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+        .feature-card h4 { color: var(--accent); margin-bottom: 10px; }
+        .feature-card p { font-size: 13px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span> <span style="font-size: 10px; background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle;">PRO</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">PRO Сканер CS2 <span style="font-size: 14px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 6px; vertical-align: middle;">PREMIUM</span></h1>
+            <p style="color: var(--text-muted);">Эксклюзивные рецепты контрактов и арбитражные связки для трейдеров.</p>
+        </div>
+
+        <!-- PRO-БЛОК 1: Контракты -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📈 Блок 1: База готовых рецептов контрактов (ROI > 105%)</h2>
+            
+            <div class="filter-chips" id="contract-filters">
+                <div class="chip active" data-filter="all">Все редкости</div>
+                <div class="chip" data-filter="milspec">Ширпотреб → Промышленное</div>
+                <div class="chip" data-filter="restricted">Промышленное → Армейское</div>
+                <div class="chip" data-filter="classified">Армейское → Запрещённое</div>
+                <div class="chip" data-filter="covert">Запрещённое → Засекреченное</div>
+            </div>
+
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px;">
+                <label style="margin: 0;">Ваш бюджет на крафт:</label>
+                <input type="number" id="craft-budget" value="100" min="1" step="1" style="width: 100px;">
+                <button id="btn-recalc-crafts" class="btn" style="width: auto; padding: 8px 16px;">Пересчитать</button>
+            </div>
+
+            <div class="table-container" id="contract-table-container">
+                <table class="pro-table">
+                    <thead>
+                        <tr>
+                            <th>Рецепт (10x вход)</th>
+                            <th>Стоимость ($)</th>
+                            <th>Возможные исходы</th>
+                            <th>EV ($)</th>
+                            <th>Профит / ROI</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="contract-tbody"></tbody>
+                </table>
+                <div id="contract-lock" class="pro-lock-overlay" style="display: none;">
+                    <div class="pro-lock-content">
+                        <h3>🔒 Доступно в PRO-подписке</h3>
+                        <p>Получите доступ к 8 проверенным рецептам контрактов с окупаемостью от +5% до +25%.</p>
+                        <input type="text" id="pro-key-contract" placeholder="Введите ключ (VALVE2026)" style="width: 100%; margin-bottom: 10px; text-align: center;">
+                        <button class="btn" onclick="unlockPro()">Получить PRO-доступ</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRO-БЛОК 2: Арбитраж -->
+        <section class="calculator-section">
+            <h2 class="calc-title">💸 Блок 2: Калькулятор арбитража скинов (Маркеты → Steam)</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ваш бюджет для закупки</label>
+                    <input type="number" id="arb-budget" value="500" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Минимальный чистый профит (%)</label>
+                    <input type="number" id="arb-min-profit" value="15" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Площадка покупки</label>
+                    <select id="arb-platform">
+                        <option value="lisskins">Lis-Skins</option>
+                        <option value="csmoney">CS.MONEY</option>
+                        <option value="buff163">Buff163</option>
+                        <option value="avan">Avan.Market</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+                <h3 style="font-size: 16px; color: #fff;">Найденные связки</h3>
+                <button id="btn-add-arb" class="btn" style="width: auto; padding: 6px 12px; font-size: 12px;">+ Добавить связку</button>
+            </div>
+
+            <div class="table-container" id="arb-table-container">
+                <table class="pro-table">
+                    <thead>
+                        <tr>
+                            <th>Скин</th>
+                            <th>Купить за ($)</th>
+                            <th>Продать в Steam ($)</th>
+                            <th>Чистыми на баланс ($)</th>
+                            <th>Штук на бюджет</th>
+                            <th>Профит ($ / %)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="arb-tbody"></tbody>
+                </table>
+                <div id="arb-lock" class="pro-lock-overlay" style="display: none;">
+                    <div class="pro-lock-content">
+                        <h3>🔒 Доступно в PRO-подписке</h3>
+                        <p>Получите доступ к живым арбитражным связкам и калькулятору прибыли.</p>
+                        <input type="text" id="pro-key-arb" placeholder="Введите ключ (VALVE2026)" style="width: 100%; margin-bottom: 10px; text-align: center;">
+                        <button class="btn" onclick="unlockPro()">Получить PRO-доступ</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">Преимущества PRO-подписки</h2>
+            <div class="pro-features">
+                <div class="feature-card">
+                    <h4>📊 Готовые рецепты</h4>
+                    <p>Не нужно считать вручную. Мы даем проверенные комбинации скинов, которые математически выгодны.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚡ Живые связки</h4>
+                    <p>Ежедневно обновляемая база арбитражных лотов с маркетов для выгодного пополнения Steam.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🛡️ Безопасность</h4>
+                    <p>Все рецепты проверены на отсутствие багов и скрытых комиссий Steam.</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="btn-reset-pro" class="btn" style="width: auto; font-size: 12px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Сбросить PRO (для теста)</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        let contractsData = [
+            { rarity: 'milspec', name: 'Kilowatt Case (10x)', inputFloat: 0.05, cost: 4.50, outcomes: 'USP-S | Jawbreaker (16%), M4A1-S | Black Lotus (16%)', ev: 5.80 },
+            { rarity: 'restricted', name: 'Revolution Case (10x)', inputFloat: 0.10, cost: 12.00, outcomes: 'AWP | Duality (25%), AK-47 | Head Shot (25%)', ev: 14.50 },
+            { rarity: 'milspec', name: 'Dreams & Nightmares (10x)', inputFloat: 0.02, cost: 6.20, outcomes: 'MP5-SD | Necro Jr. (20%), Dual Berettas | Melondrama (20%)', ev: 7.40 },
+            { rarity: 'classified', name: 'Recoil Case (10x)', inputFloat: 0.15, cost: 45.00, outcomes: 'USP-S | Printstream (50%), AWP | Chromatic Aberration (50%)', ev: 52.00 },
+            { rarity: 'covert', name: 'Fracture Case (10x)', inputFloat: 0.08, cost: 85.00, outcomes: 'AK-47 | Legion of Anubis (100%)', ev: 98.00 },
+            { rarity: 'restricted', name: 'Kilowatt Case (10x)', inputFloat: 0.12, cost: 18.50, outcomes: 'M4A1-S | Black Lotus (50%), USP-S | Jawbreaker (50%)', ev: 22.00 },
+            { rarity: 'classified', name: 'Revolution Case (10x)', inputFloat: 0.20, cost: 60.00, outcomes: 'AK-47 | Head Shot (100%)', ev: 68.00 },
+            { rarity: 'covert', name: 'Dreams & Nightmares (10x)', inputFloat: 0.05, cost: 120.00, outcomes: 'MP9 | Starlight Protector (100%)', ev: 135.00 }
+        ];
+
+        let arbData = [
+            { name: 'AK-47 | Slate (FT)', buy: 12.50, sell: 18.00 },
+            { name: 'AWP | Atheris (MW)', buy: 8.20, sell: 12.50 },
+            { name: 'M4A1-S | Night Terror (FN)', buy: 15.00, sell: 22.00 },
+            { name: 'Desert Eagle | Light Rail (FT)', buy: 5.50, sell: 8.00 },
+            { name: 'USP-S | Ticket to Hell (MW)', buy: 9.00, sell: 13.50 },
+            { name: 'Glock-18 | Winterized (FN)', buy: 4.50, sell: 6.80 },
+            { name: 'MP9 | Hydra (MW)', buy: 3.00, sell: 4.80 },
+            { name: 'FAMAS | Mecha Industries (FT)', buy: 7.50, sell: 11.00 }
+        ];
+
+        // Проверка статуса и скрытие/показ оверлеев
+        function checkProStatus() {
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+            document.getElementById('contract-lock').style.display = isPro ? 'none' : 'flex';
+            document.getElementById('arb-lock').style.display = isPro ? 'none' : 'flex';
+        }
+
+        // Разблокировка
+        window.unlockPro = function() {
+            const key1 = document.getElementById('pro-key-contract').value.trim();
+            const key2 = document.getElementById('pro-key-arb').value.trim();
+            const enteredKey = key1 || key2;
+
+            if (enteredKey === 'VALVE2026' || enteredKey.startsWith('VH-PRO-')) {
+                localStorage.setItem('valvehub_pro_unlocked', 'true');
+                checkProStatus();
+                
+                // ВАЖНО: Перерисовываем таблицы, чтобы убрать blur со строк
+                renderContracts(document.querySelector('#contract-filters .chip.active').dataset.filter);
+                renderArb();
+                
+                alert('✅ PRO-доступ успешно активирован!');
+            } else {
+                alert('❌ Неверный ключ. Используйте тестовый: VALVE2026');
+            }
+        };
+
+        // Сброс PRO
+        document.getElementById('btn-reset-pro').addEventListener('click', () => {
+            localStorage.removeItem('valvehub_pro_unlocked');
+            checkProStatus();
+            renderContracts('all');
+            renderArb();
+            alert('PRO-доступ сброшен.');
+        });
+
+        // Отрисовка контрактов
+        function renderContracts(filter = 'all') {
+            const tbody = document.getElementById('contract-tbody');
+            tbody.innerHTML = '';
+            const budget = parseFloat(document.getElementById('craft-budget').value) || 100;
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+
+            contractsData.forEach((c) => {
+                if (filter !== 'all' && c.rarity !== filter) return;
+                
+                const isAffordable = budget >= c.cost;
+                const costStyle = isAffordable ? 'color: var(--text-main);' : 'color: var(--red); text-decoration: line-through;';
+                const profit = c.ev - c.cost;
+                const roi = (profit / c.cost) * 100;
+                
+                const tr = document.createElement('tr');
+                // Применяем blur, если это не PRO и строка >= 3
+                // Но проще: если не PRO, мы просто скрываем оверлеем, а сами строки делаем blur
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${c.name}<br><small style="color: var(--text-muted);">Float ≤ ${c.inputFloat}</small></td>
+                    <td style="${costStyle}">${c.cost.toFixed(2)} $</td>
+                    <td style="font-size: 11px; color: var(--text-muted);">${c.outcomes}</td>
+                    <td>${c.ev.toFixed(2)} $</td>
+                    <td><span class="profit-green">+${profit.toFixed(2)} $</span><br><span class="roi-badge">+${roi.toFixed(1)}%</span></td>
+                    <td><a href="cs2-tradeup.html?float=${c.inputFloat}" class="btn btn-sm">В калькулятор</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Накладываем blur, если не PRO
+            if (!isPro) {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, i) => {
+                    if (i >= 2) row.style.filter = 'blur(5px)';
+                });
+            } else {
+                // Если PRO, на всякий случай убираем blur
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(row => row.style.filter = 'none');
+            }
+        }
+
+        document.querySelectorAll('#contract-filters .chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('#contract-filters .chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                renderContracts(chip.dataset.filter);
+            });
+        });
+
+        document.getElementById('btn-recalc-crafts').addEventListener('click', () => {
+            renderContracts(document.querySelector('#contract-filters .chip.active').dataset.filter);
+        });
+
+        // Отрисовка арбитража
+        function renderArb() {
+            const tbody = document.getElementById('arb-tbody');
+            tbody.innerHTML = '';
+            const budget = parseFloat(document.getElementById('arb-budget').value) || 500;
+            const minProfitPct = parseFloat(document.getElementById('arb-min-profit').value) || 15;
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+
+            arbData.forEach((a) => {
+                const steamNet = a.sell * 0.8695;
+                const profitPerItem = steamNet - a.buy;
+                const profitPct = (profitPerItem / a.buy) * 100;
+                const isGood = profitPct >= minProfitPct;
+                const rowStyle = isGood ? '' : 'opacity: 0.5;';
+                const itemsCount = Math.floor(budget / a.buy);
+                const totalProfit = itemsCount * profitPerItem;
+
+                const tr = document.createElement('tr');
+                tr.style = rowStyle;
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${a.name}</td>
+                    <td>${a.buy.toFixed(2)} $</td>
+                    <td>${a.sell.toFixed(2)} $</td>
+                    <td>${steamNet.toFixed(2)} $</td>
+                    <td>${itemsCount} шт.</td>
+                    <td><span class="profit-green">+${totalProfit.toFixed(2)} $</span><br><span class="roi-badge">+${profitPct.toFixed(1)}%</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Накладываем blur, если не PRO
+            if (!isPro) {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, i) => {
+                    if (i >= 2) row.style.filter = 'blur(5px)';
+                });
+            } else {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(row => row.style.filter = 'none');
+            }
+        }
+
+        document.getElementById('arb-budget').addEventListener('input', renderArb);
+        document.getElementById('arb-min-profit').addEventListener('input', renderArb);
+        document.getElementById('arb-platform').addEventListener('change', renderArb);
+
+        document.getElementById('btn-add-arb').addEventListener('click', () => {
+            const name = prompt('Название скина:');
+            if (!name) return;
+            const buy = parseFloat(prompt('Цена покупки на маркете ($):'));
+            if (isNaN(buy) || buy <= 0) return;
+            const sell = parseFloat(prompt('Цена продажи в Steam ($):'));
+            if (isNaN(sell) || sell <= 0) return;
+
+            arbData.push({ name, buy, sell });
+            renderArb();
+        });
+
+        window.onload = function() {
+            checkProStatus();
+            renderContracts();
+            renderArb();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

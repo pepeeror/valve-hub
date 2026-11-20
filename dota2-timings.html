@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тайминги Dota 2 (Стаки, Рошан, Руны) | VALVE HUB</title>
+    <meta name="description" content="Живой трекер таймингов карты Dota 2: стаки, отводы, руны, Терзатель и Рошан. Калькулятор респавна Аегиса и шпаргалка секунд стака.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .timer-display {
+            font-size: 72px;
+            font-weight: 800;
+            text-align: center;
+            color: var(--accent);
+            font-family: monospace;
+            margin: 20px 0;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .timer-controls .btn {
+            width: auto;
+            padding: 10px 30px;
+        }
+        
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .event-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+        .event-card.active {
+            opacity: 1;
+            filter: grayscale(0);
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            transform: scale(1.02);
+        }
+        .event-card.active.gold { border-color: var(--gold); background: rgba(245, 158, 11, 0.1); box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+        .event-card.active.green { border-color: var(--green); background: rgba(16, 185, 129, 0.1); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .event-card.active.red { border-color: var(--red); background: rgba(239, 68, 68, 0.1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+        
+        .event-title {
+            font-weight: 800;
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        .event-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        /* Roshan styles */
+        .roshan-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .roshan-result {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .roshan-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .roshan-row:last-child { border-bottom: none; }
+        .roshan-label { color: var(--text-muted); font-size: 14px; }
+        .roshan-value { font-weight: 800; font-size: 18px; color: #fff; }
+        .roshan-value.aegis { color: var(--green); }
+        .roshan-value.min { color: var(--gold); }
+        .roshan-value.max { color: var(--red); }
+
+        /* Table */
+        .stack-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .stack-table th {
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-input);
+        }
+        .stack-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .time-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Тайминги Dota 2</h1>
+            <p style="color: var(--text-muted);">Живой трекер событий карты и калькулятор Рошана.</p>
+        </div>
+
+        <!-- БЛОК 1: Живой таймер -->
+        <section class="calculator-section">
+            <h2 class="calc-title">⏱️ Блок 1: Live Match Helper</h2>
+            
+            <div class="timer-display" id="timer-display">00:00</div>
+            
+            <div class="timer-controls">
+                <button id="btn-start" class="btn">▶ Старт</button>
+                <button id="btn-pause" class="btn" style="display: none; background: rgba(245, 158, 11, 0.2); color: var(--gold); border-color: var(--gold);">⏸ Пауза</button>
+                <button id="btn-reset" class="btn" style="background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">⏹ Сброс</button>
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; align-items: center;">
+                <label style="margin: 0;">Ввести время вручную (MM:SS):</label>
+                <input type="text" id="manual-time" value="00:00" placeholder="00:00" style="width: 100px; text-align: center;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="sound-toggle" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                    <label for="sound-toggle" style="margin: 0; font-size: 12px; cursor: pointer;">Звук</label>
+                </div>
+            </div>
+
+            <div class="event-grid" id="events-grid">
+                <!-- Карточки генерируются через JS -->
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Рошан -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🛡️ Блок 2: Таймер Рошана и Аегиса</h2>
+            
+            <div class="roshan-input-group">
+                <div class="form-group" style="margin: 0; flex: 1;">
+                    <label>Время убийства Рошана (MM:SS)</label>
+                    <input type="text" id="roshan-kill-time" value="24:15" placeholder="24:15">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label>Номер Рошана</label>
+                    <select id="roshan-number">
+                        <option value="1">1-й Рошан</option>
+                        <option value="2">2-й Рошан</option>
+                        <option value="3">3-й+ Рошан</option>
+                    </select>
+                </div>
+                <button id="btn-roshan" class="btn" style="width: auto;">Зафиксировать</button>
+            </div>
+
+            <div id="roshan-result-box" class="roshan-result" style="display: none;">
+                <div class="roshan-row">
+                    <span class="roshan-label">Исчезновение Аегиса (+5 мин):</span>
+                    <span class="roshan-value aegis" id="ros-aegis">—</span>
+                </div>
+                <div class="roshan-row">
+                    <span class="roshan-label">Мин. окно респавна (+8 мин):</span>
+                    <span class="roshan-value min" id="ros-min">—</span>
+                </div>
+                <div class="roshan-row">
+                    <span class="roshan-label">Макс. окно респавна (+11 мин):</span>
+                    <span class="roshan-value max" id="ros-max">—</span>
+                </div>
+                <div class="roshan-row" style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; padding: 10px;">
+                    <span class="roshan-label" style="font-weight: 600; color: #fff;">Доп. дроп:</span>
+                    <span id="ros-loot" style="font-size: 14px; color: var(--gold); font-weight: 600;"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 3: Шпаргалка стаков -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📋 Блок 3: Шпаргалка стаков и отводов</h2>
+            
+            <div class="filters" style="margin-bottom: 15px; justify-content: flex-start;">
+                <button class="filter-btn active" data-side="all">Все лагеря</button>
+                <button class="filter-btn" data-side="radiant">Силы Света</button>
+                <button class="filter-btn" data-side="dire">Силы Тьмы</button>
+            </div>
+
+            <table class="stack-table">
+                <thead>
+                    <tr>
+                        <th>Лагерь</th>
+                        <th>Сторона</th>
+                        <th>Секунда стака</th>
+                        <th>Совет</th>
+                    </tr>
+                </thead>
+                <tbody id="stack-tbody">
+                    <!-- Заполняется через JS -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ</h2>
+            <div class="faq-item">
+                <h3>Как делать двойной стак в Dota 2?</h3>
+                <p>Двойной стак делается, когда вы успеваете ударить один лагерь на :53, а второй — на :55. Это возможно только если лагеря находятся рядом (например, два лагеря на миду или в лесу), и у вас есть герой с быстрым перемещением (например, Queen of Pain, Storm Spirit или кто-то с Blink Dagger).</p>
+            </div>
+            <div class="faq-item">
+                <h3>Когда выгодно отводить крипов (пуллить)?</h3>
+                <p>Отвод крипов выгоден, когда ваша линия стоит под вражеской вышкой, и вы не можете безопасно добивать. Отводя крипов в свой лес, вы забираете опыт и золото себе, а также лишаете вражеского оффлейнера ресурсов. Идеальное время для отвода — на :15 или :45 каждой минуты.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            // ==========================================
+            // БЛОК 1: ТАЙМЕР
+            // ==========================================
+            let timerInterval = null;
+            let currentSeconds = 0;
+            let isRunning = false;
+            
+            const display = document.getElementById('timer-display');
+            const btnStart = document.getElementById('btn-start');
+            const btnPause = document.getElementById('btn-pause');
+            const btnReset = document.getElementById('btn-reset');
+            const manualInput = document.getElementById('manual-time');
+            const soundToggle = document.getElementById('sound-toggle');
+
+            function formatTime(secs) {
+                const m = Math.floor(secs / 60);
+                const s = secs % 60;
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            function playBeep() {
+                if (!soundToggle.checked) return;
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                } catch(e) {}
+            }
+
+            // События
+            const events = [
+                { id: 'stack', title: 'СТАК крипов', desc: 'Удар на :53 - :55', color: 'gold' },
+                { id: 'pull', title: 'ОТВОД (пулл)', desc: 'На :15 или :45', color: 'green' },
+                { id: 'runes', title: 'Руны', desc: 'Спавн на реке', color: 'blue' },
+                { id: 'lotus', title: 'Лотосы', desc: 'Спавн в прудах', color: 'blue' },
+                { id: 'wisdom', title: 'Руны Мудрости', desc: 'Опыт для саппортов', color: 'gold' },
+                { id: 'tormentor', title: 'Терзатель', desc: 'Aghanim\'s Shard', color: 'red' },
+                { id: 'neutrals', title: 'Нейтральные предметы', desc: 'Смена разряда', color: 'green' }
+            ];
+
+            // Инициализация карточек
+            const grid = document.getElementById('events-grid');
+            events.forEach(ev => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                card.id = 'event-' + ev.id;
+                card.innerHTML = `
+                    <div class="event-title">${ev.title}</div>
+                    <div class="event-desc">${ev.desc}</div>
+                `;
+                grid.appendChild(card);
+            });
+
+            function updateEvents(secs) {
+                const m = Math.floor(secs / 60);
+                const s = secs % 60;
+
+                // Сброс всех
+                document.querySelectorAll('.event-card').forEach(c => c.classList.remove('active', 'gold', 'green', 'red', 'blue'));
+
+                // Стак (45-52 сек)
+                if (s >= 45 && s <= 52) {
+                    const el = document.getElementById('event-stack');
+                    el.classList.add('active', 'gold');
+                }
+                // Отвод (15 или 45)
+                if (s >= 13 && s <= 17 || s >= 43 && s <= 47) {
+                    const el = document.getElementById('event-pull');
+                    el.classList.add('active', 'green');
+                }
+                // Руны (каждые 2 минуты на 0-й секунде)
+                if (m % 2 === 0 && s >= 55 || m % 2 === 1 && s <= 5) {
+                    const el = document.getElementById('event-runes');
+                    el.classList.add('active', 'blue');
+                }
+                // Лотосы (каждые 3 минуты на 0-й секунде)
+                if (m % 3 === 0 && s >= 55 || m % 3 === 1 && s <= 5) {
+                    const el = document.getElementById('event-lotus');
+                    el.classList.add('active', 'blue');
+                }
+                // Руны Мудрости (каждые 7 минут)
+                if (m % 7 === 0 && s >= 55 || m % 7 === 1 && s <= 5) {
+                    const el = document.getElementById('event-wisdom');
+                    el.classList.add('active', 'gold');
+                }
+                // Терзатель (с 20:00)
+                if (m >= 20 && s >= 0) {
+                    const el = document.getElementById('event-tormentor');
+                    el.classList.add('active', 'red');
+                }
+                // Нейтральные предметы
+                const neutralMins = [7, 17, 27, 37, 60];
+                if (neutralMins.includes(m) && s >= 55 || neutralMins.includes(m+1) && s <= 5) {
+                    const el = document.getElementById('event-neutrals');
+                    el.classList.add('active', 'green');
+                }
+            }
+
+            function tick() {
+                currentSeconds++;
+                display.textContent = formatTime(currentSeconds);
+                manualInput.value = formatTime(currentSeconds);
+                updateEvents(currentSeconds);
+                
+                // Звук на ключевых секундах
+                const s = currentSeconds % 60;
+                if (s === 45 || s === 53) {
+                    playBeep();
+                }
+            }
+
+            btnStart.addEventListener('click', () => {
+                if (isRunning) return;
+                isRunning = true;
+                timerInterval = setInterval(tick, 1000);
+                btnStart.style.display = 'none';
+                btnPause.style.display = 'inline-block';
+            });
+
+            btnPause.addEventListener('click', () => {
+                isRunning = false;
+                clearInterval(timerInterval);
+                btnStart.style.display = 'inline-block';
+                btnPause.style.display = 'none';
+            });
+
+            btnReset.addEventListener('click', () => {
+                isRunning = false;
+                clearInterval(timerInterval);
+                currentSeconds = 0;
+                display.textContent = '00:00';
+                manualInput.value = '00:00';
+                btnStart.style.display = 'inline-block';
+                btnPause.style.display = 'none';
+                updateEvents(0);
+            });
+
+            manualInput.addEventListener('change', (e) => {
+                const val = e.target.value;
+                const parts = val.split(':');
+                if (parts.length === 2) {
+                    const m = parseInt(parts[0]) || 0;
+                    const s = parseInt(parts[1]) || 0;
+                    currentSeconds = m * 60 + s;
+                    display.textContent = formatTime(currentSeconds);
+                    updateEvents(currentSeconds);
+                }
+            });
+
+            // ==========================================
+            // БЛОК 2: РОШАН
+            // ==========================================
+            const btnRoshan = document.getElementById('btn-roshan');
+            const rosBox = document.getElementById('roshan-result-box');
+            const rosInput = document.getElementById('roshan-kill-time');
+            const rosNum = document.getElementById('roshan-number');
+
+            function parseTime(str) {
+                const parts = str.split(':');
+                if (parts.length === 2) {
+                    return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+                }
+                return 0;
+            }
+
+            function formatRosTime(secs) {
+                const m = Math.floor(secs / 60);
+                const s = secs % 60;
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            btnRoshan.addEventListener('click', () => {
+                const killSecs = parseTime(rosInput.value);
+                if (killSecs <= 0) return;
+
+                const aegisSecs = killSecs + 5 * 60;
+                const minRespawn = killSecs + 8 * 60;
+                const maxRespawn = killSecs + 11 * 60;
+                const num = parseInt(rosNum.value);
+
+                document.getElementById('ros-aegis').textContent = formatRosTime(aegisSecs);
+                document.getElementById('ros-min').textContent = formatRosTime(minRespawn);
+                document.getElementById('ros-max').textContent = formatRosTime(maxRespawn);
+
+                // Дроп
+                let loot = '';
+                if (num === 1) loot = 'Aghanim\'s Blessing (1 шт.)';
+                else if (num === 2) loot = 'Aghanim\'s Blessing (1 шт.) + Refresher Shard';
+                else loot = 'Aghanim\'s Blessing + Refresher Shard + Сыр (Cheese)';
+
+                document.getElementById('ros-loot').textContent = loot;
+
+                rosBox.style.display = 'block';
+            });
+
+            // ==========================================
+            // БЛОК 3: ТАБЛИЦА СТАКОВ
+            // ==========================================
+            const stackData = [
+                { camp: 'Малый лагерь (Easy)', side: 'radiant', time: ':53', advice: 'Ударьте на 53-й секунде' },
+                { camp: 'Средний лагерь (Medium)', side: 'radiant', time: ':53', advice: 'Ударьте на 53-й секунде' },
+                { camp: 'Большой лагерь (Hard)', side: 'radiant', time: ':53', advice: 'Ударьте на 53-й секунде' },
+                { camp: 'Древние (Ancient)', side: 'radiant', time: ':53', advice: 'Ударьте на 53-й секунде' },
+                { camp: 'Малый лагерь (Easy)', side: 'dire', time: ':55', advice: 'Ударьте на 55-й секунде' },
+                { camp: 'Средний лагерь (Medium)', side: 'dire', time: ':55', advice: 'Ударьте на 55-й секунде' },
+                { camp: 'Большой лагерь (Hard)', side: 'dire', time: ':55', advice: 'Ударьте на 55-й секунде' },
+                { camp: 'Древние (Ancient)', side: 'dire', time: ':55', advice: 'Ударьте на 55-й секунде' }
+            ];
+
+            function renderStackTable(filter = 'all') {
+                const tbody = document.getElementById('stack-tbody');
+                tbody.innerHTML = '';
+
+                stackData.forEach(item => {
+                    if (filter !== 'all' && item.side !== filter) return;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 600;">${item.camp}</td>
+                        <td>${item.side === 'radiant' ? 'Свет' : 'Тьма'}</td>
+                        <td><span class="time-badge">${item.time}</span></td>
+                        <td style="font-size: 12px; color: var(--text-muted);">${item.advice}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.querySelectorAll('.filter-btn[data-side]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn[data-side]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderStackTable(btn.dataset.side);
+                });
+            });
+
+            // ==========================================
+            // ИНИЦИАЛИЗАЦИЯ
+            // ==========================================
+            updateEvents(0);
+            renderStackTable();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

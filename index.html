@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALVE HUB — Инструменты для трейдеров CS2, Dota 2 и TF2</title>
+    <meta name="description" content="Калькуляторы пополнения Steam, комиссий, конвертер валют, контракты CS2, конфиги, оценка инвентаря, тайминги Dota 2 и PRO-сканеры.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Инструменты для трейдеров и игроков Valve</h1>
+            <p>Профессиональные калькуляторы для расчета комиссий Steam, выгодного пополнения кошелька и анализа игр.</p>
+        </section>
+
+        <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="all">Все инструменты</button>
+            <button class="filter-btn" data-filter="cs2">CS2</button>
+            <button class="filter-btn" data-filter="dota">Dota 2</button>
+            <button class="filter-btn" data-filter="tf2">TF2</button>
+            <button class="filter-btn" data-filter="common">Общие</button>
+        </div>
+
+        <div class="grid" id="tools-grid">
+            <!-- Steam -->
+            <div class="card" data-game="common">
+                <div class="card-header"><span class="badge badge-common">Steam</span></div>
+                <h3 class="card-title">Пополнение Steam в «+»</h3>
+                <p class="card-desc">Сравнение прямого пополнения с комиссией vs пополнение через ключи TF2 и скины CS2/Dota 2.</p>
+                <a href="steam-topup.html" class="btn">Открыть калькулятор</a>
+            </div>
+
+            <div class="card" data-game="common">
+                <div class="card-header"><span class="badge badge-common">Steam</span></div>
+                <h3 class="card-title">Калькулятор комиссий Steam</h3>
+                <p class="card-desc">Точный расчёт 15% комиссии ТП Steam (5% Steam + 10% игра) с учётом копеечных округлений.</p>
+                <a href="steam-topup.html#fees" class="btn">Открыть калькулятор</a>
+            </div>
+
+            <!-- TF2 -->
+            <div class="card" data-game="tf2">
+                <div class="card-header"><span class="badge badge-tf2">TF2</span></div>
+                <h3 class="card-title">Конвертер валют TF2</h3>
+                <p class="card-desc">Keys ↔ Ref ↔ Rec ↔ Scrap ↔ USD/RUB/BYN. Базовый инструмент трейдера Team Fortress 2.</p>
+                <a href="tf2-converter.html" class="btn">Открыть конвертер</a>
+            </div>
+
+            <div class="card" data-game="tf2">
+                <div class="card-header"><span class="badge badge-tf2">TF2</span></div>
+                <h3 class="card-title">Калькулятор крафта TF2</h3>
+                <p class="card-desc">Переплавка оружия в металл, расчет выгоды шапок и шпаргалка рецептов.</p>
+                <a href="tf2-craft.html" class="btn">Открыть калькулятор</a>
+            </div>
+
+            <div class="card" data-game="tf2">
+                <div class="card-header"><span class="badge badge-tf2">TF2</span></div>
+                <h3 class="card-title">Конструктор конфигов TF2</h3>
+                <p class="card-desc">Генератор autoexec.cfg, классовых биндов и параметров запуска Steam.</p>
+                <a href="tf2-config.html" class="btn">Открыть генератор</a>
+            </div>
+
+            <div class="card" data-game="tf2">
+                <div class="card-header">
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.3);">PRO</span>
+                </div>
+                <h3 class="card-title">PRO Сканер TF2</h3>
+                <p class="card-desc">6 инструментов: пополнение Steam через ключи, Killstreak, арбитраж, ROI ящиков, MvM и оценка наценки.</p>
+                <a href="tf2-pro-scanner.html" class="btn" style="color: var(--gold); border-color: var(--gold);">Открыть PRO</a>
+            </div>
+
+            <!-- CS2 -->
+            <div class="card" data-game="cs2">
+                <div class="card-header"><span class="badge badge-cs2">CS2</span></div>
+                <h3 class="card-title">CS2 Trade-Up Калькулятор</h3>
+                <p class="card-desc">Расчёт шансов и итогового качества скина в контрактах обмена.</p>
+                <a href="cs2-tradeup.html" class="btn">Открыть калькулятор</a>
+            </div>
+
+            <div class="card" data-game="cs2">
+                <div class="card-header"><span class="badge badge-cs2">CS2</span></div>
+                <h3 class="card-title">Генератор прицелов и конфигов</h3>
+                <p class="card-desc">Визуальный конструктор прицела с пресетами про-игроков и генератор файла autoexec.cfg.</p>
+                <a href="cs2-config.html" class="btn">Открыть генератор</a>
+            </div>
+
+            <div class="card" data-game="cs2">
+                <div class="card-header"><span class="badge badge-cs2">CS2</span></div>
+                <h3 class="card-title">Калькулятор чувствительности (eDPI)</h3>
+                <p class="card-desc">Расчёт eDPI, сантиметров на разворот 360° и конвертер сенсы между CS2, Valorant, Apex и TF2.</p>
+                <a href="cs2-sens.html" class="btn">Открыть калькулятор</a>
+            </div>
+
+            <div class="card" data-game="cs2">
+                <div class="card-header">
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.3);">PRO</span>
+                </div>
+                <h3 class="card-title">PRO Сканер контрактов и арбитража</h3>
+                <p class="card-desc">База готовых рецептов контрактов в «+» и живые арбитражные связки Маркеты ↔ Steam.</p>
+                <a href="cs2-pro-scanner.html" class="btn" style="color: var(--gold); border-color: var(--gold);">Открыть PRO</a>
+            </div>
+
+            <!-- Dota 2 -->
+            <div class="card" data-game="dota">
+                <div class="card-header"><span class="badge badge-dota">Dota 2</span></div>
+                <h3 class="card-title">Инструменты Dota 2 (ММР и бинды)</h3>
+                <p class="card-desc">Калькулятор ММР до следующего ранга, расчёт винрейта и конструктор файла autoexec.cfg с биндами камеры на руны.</p>
+                <a href="dota2-tools.html" class="btn">Открыть инструменты</a>
+            </div>
+
+            <div class="card" data-game="dota">
+                <div class="card-header"><span class="badge badge-dota">Dota 2</span></div>
+                <h3 class="card-title">Тайминги карты Dota 2</h3>
+                <p class="card-desc">Живой трекер стаков, отводов, рун и Рошана. Калькулятор респавна Аегиса и шпаргалка для саппортов.</p>
+                <a href="dota2-timings.html" class="btn">Открыть тайминги</a>
+            </div>
+
+            <div class="card" data-game="dota">
+                <div class="card-header"><span class="badge badge-dota">Dota 2</span></div>
+                <h3 class="card-title">Калькулятор EHP и Брони</h3>
+                <p class="card-desc">Расчёт эффективного здоровья, физической брони, сопротивления магии и входящего урона.</p>
+                <a href="dota2-ehp.html" class="btn">Открыть калькулятор</a>
+            </div>
+
+            <div class="card" data-game="dota">
+                <div class="card-header">
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.3);">PRO</span>
+                </div>
+                <h3 class="card-title">PRO Сканер Dota 2 (Арканы)</h3>
+                <p class="card-desc">Выгодное пополнение Steam через Арканы и Immortal-предметы, калькулятор окупаемости сокровищниц.</p>
+                <a href="dota2-pro-scanner.html" class="btn" style="color: var(--gold); border-color: var(--gold);">Открыть PRO</a>
+            </div>
+
+            <!-- Общие (Инвентарь) -->
+            <div class="card" data-game="common">
+                <div class="card-header"><span class="badge badge-common">Steam</span></div>
+                <h3 class="card-title">Оценка стоимости инвентаря</h3>
+                <p class="card-desc">Проверка стоимости предметов CS2, Dota 2, TF2 и сравнение выплат на торговых площадках.</p>
+                <a href="inventory-value.html" class="btn">Оценить инвентарь</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB. Инструменты для трейдеров и игроков. Не связан с Valve Corporation.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const cards = document.querySelectorAll('.card');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const filterValue = btn.getAttribute('data-filter');
+
+                    cards.forEach(card => {
+                        const game = card.getAttribute('data-game');
+                        if (filterValue === 'all' || filterValue === game) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

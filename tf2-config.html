@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор конфигов и биндов TF2 | VALVE HUB</title>
+    <meta name="description" content="Генератор autoexec.cfg для оптимизации TF2, конструктор классовых биндов (Soldier, Medic, Spy, Engineer) и параметры запуска Steam.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .code-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #c9d1d9;
+            white-space: pre-wrap;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: var(--bg-input);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        .checkbox-item small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+        
+        .class-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .class-tab {
+            padding: 10px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .class-tab:hover { border-color: var(--accent); }
+        .class-tab.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Конструктор конфигов TF2</h1>
+            <p style="color: var(--text-muted);">Генератор autoexec.cfg, биндов и параметров запуска.</p>
+        </div>
+
+        <!-- БЛОК 1: autoexec.cfg -->
+        <section class="calculator-section">
+            <h2 class="calc-title">⚙️ Блок 1: Основной конфиг (autoexec.cfg)</h2>
+            
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-opt" checked>
+                    <label for="cfg-opt">Повышение FPS (отключение теней и частиц)
+                        <small>r_shadows 0; cl_ragdoll_fade_time 0; mat_phong 0</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-fov" checked>
+                    <label for="cfg-fov">Идеальный FOV 90 и компактные модели
+                        <small>fov_desired 90; viewmodel_fov 84; tf_use_min_viewmodels 1</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-net" checked>
+                    <label for="cfg-net">Оптимальные сетевые настройки
+                        <small>cl_cmdrate 66; cl_updaterate 66; rate 100000; cl_interp 0</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-hud" checked>
+                    <label for="cfg-hud">Удобный боевой интерфейс (звук попадания)
+                        <small>hud_combattext 1; tf_dingalingaling 1; cl_autoreload 1</small>
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-move" checked>
+                    <label for="cfg-move">Null-Cancelling Movement (A/D без остановки)
+                        <small>Мгновенная смена направления движения</small>
+                    </label>
+                </div>
+            </div>
+
+            <label style="margin-top: 10px; display: block;">Предпросмотр autoexec.cfg:</label>
+            <div class="code-box" id="autoexec-output">// Ваш конфиг</div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btn-download-autoexec" class="btn" style="flex: 1;">💾 Скачать autoexec.cfg</button>
+                <button id="btn-copy-autoexec" class="btn" style="flex: 1; background: rgba(59, 130, 246, 0.1); color: var(--accent); border-color: rgba(59, 130, 246, 0.2);">📋 Скопировать конфиг</button>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Классовые бинды -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🎯 Блок 2: Классовые бинды</h2>
+            
+            <div class="class-tabs" id="class-tabs">
+                <div class="class-tab active" data-class="soldier">Солдат (Soldier)</div>
+                <div class="class-tab" data-class="medic">Медик (Medic)</div>
+                <div class="class-tab" data-class="spy">Шпион (Spy)</div>
+                <div class="class-tab" data-class="engineer">Инженер (Engineer)</div>
+            </div>
+
+            <div id="class-bind-description" style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted);">
+                <!-- Описание для выбранного класса -->
+            </div>
+
+            <label style="display: block;">Предпросмотр [class].cfg:</label>
+            <div class="code-box" id="class-output">// Выберите класс</div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btn-download-class" class="btn" style="flex: 1;">💾 Скачать файл класса</button>
+                <button id="btn-copy-class" class="btn" style="flex: 1; background: rgba(59, 130, 246, 0.1); color: var(--accent); border-color: rgba(59, 130, 246, 0.2);">📋 Скопировать бинды</button>
+            </div>
+        </section>
+
+        <!-- БЛОК 3: Параметры запуска -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🚀 Блок 3: Параметры запуска Steam</h2>
+            
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="launch-novid" checked>
+                    <label for="launch-novid">-novid (пропуск заставки Valve)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="launch-nojoy" checked>
+                    <label for="launch-nojoy">-nojoy (отключение геймпада)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="launch-nosteamcontroller" checked>
+                    <label for="launch-nosteamcontroller">-nosteamcontroller (ускорение запуска)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="launch-nohltv" checked>
+                    <label for="launch-nohltv">-nohltv (отключение SourceTV)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="launch-particles" checked>
+                    <label for="launch-particles">-particles 1 (уменьшение нагрузки от частиц)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="launch-dx81" checked>
+                    <label for="launch-dx81">-dxlevel 81 (DirectX 8.1 для макс. FPS)</label>
+                </div>
+            </div>
+
+            <label style="margin-top: 10px; display: block;">Строка параметров запуска:</label>
+            <div class="code-box" id="launch-output" style="min-height: 50px;">-novid -nojoy</div>
+            
+            <button id="btn-copy-launch" class="btn">📋 Скопировать параметры запуска</button>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ</h2>
+            <div class="faq-item">
+                <h3>Куда кидать файлы autoexec.cfg и soldier.cfg?</h3>
+                <p>Все конфиги кладутся в папку: <code>...\Steam\steamapps\common\Team Fortress 2\tf\cfg</code>. Файл <code>autoexec.cfg</code> загружается автоматически при старте игры. Для классовых конфигов (например, <code>soldier.cfg</code>) игра сама подгружает их при выборе класса, если в <code>autoexec.cfg</code> прописана команда <code>exec soldier.cfg</code> (или через настройки самого класса).</p>
+            </div>
+            <div class="faq-item">
+                <h3>Что такое Null-Cancelling Movement?</h3>
+                <p>Это бинд, который позволяет вашему персонажу мгновенно менять направление движения при зажатых клавишах A и D, без необходимости отпускать одну из них. Это дает микро-преимущество в стрейфах и уклонениях от снарядов.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            // ==========================================
+            // БЛОК 1: autoexec.cfg
+            // ==========================================
+            function generateAutoexec() {
+                let lines = ['// Autoexec.cfg generated by VALVE HUB', '// Date: ' + new Date().toLocaleDateString(), ''];
+
+                if (document.getElementById('cfg-opt').checked) {
+                    lines.push(
+                        '// Оптимизация FPS',
+                        'r_shadows 0',
+                        'cl_ragdoll_fade_time 0',
+                        'cl_ragdoll_physics_enable 0',
+                        'g_ragdoll_fadespeed 0',
+                        'r_eyes 0',
+                        'r_flex 0',
+                        'r_teeth 0',
+                        'mat_phong 0',
+                        ''
+                    );
+                }
+                if (document.getElementById('cfg-fov').checked) {
+                    lines.push(
+                        '// FOV и модели',
+                        'fov_desired 90',
+                        'viewmodel_fov 84',
+                        'tf_use_min_viewmodels 1',
+                        ''
+                    );
+                }
+                if (document.getElementById('cfg-net').checked) {
+                    lines.push(
+                        '// Сетевые настройки',
+                        'cl_cmdrate 66',
+                        'cl_updaterate 66',
+                        'rate 100000',
+                        'cl_interp 0',
+                        'cl_interp_ratio 1',
+                        'cl_smooth 0',
+                        ''
+                    );
+                }
+                if (document.getElementById('cfg-hud').checked) {
+                    lines.push(
+                        '// Боевой интерфейс',
+                        'hud_combattext 1',
+                        'hud_combattext_batching 1',
+                        'tf_dingalingaling 1',
+                        'cl_autoreload 1',
+                        ''
+                    );
+                }
+                if (document.getElementById('cfg-move').checked) {
+                    lines.push(
+                        '// Null-Cancelling Movement',
+                        'alias +mfwd "-back; +forward; alias checkfwd +forward"',
+                        'alias +mback "-forward; +back; alias checkback +back"',
+                        'alias +mleft "-moveright; +moveleft; alias checkleft +moveleft"',
+                        'alias +mright "-moveleft; +moveright; alias checkright +moveright"',
+                        'alias -mfwd "-forward; checkback; alias checkfwd"',
+                        'alias -mback "-back; checkfwd; alias checkback"',
+                        'alias -mleft "-moveleft; checkright; alias checkleft"',
+                        'alias -mright "-moveright; checkleft; alias checkright"',
+                        'alias checkfwd',
+                        'alias checkback',
+                        'alias checkleft',
+                        'alias checkright',
+                        'bind w +mfwd',
+                        'bind s +mback',
+                        'bind a +mleft',
+                        'bind d +mright',
+                        ''
+                    );
+                }
+
+                lines.push('// Конец конфига');
+                const result = lines.join('\n');
+                document.getElementById('autoexec-output').textContent = result;
+                return result;
+            }
+
+            // Слушатели для autoexec
+            ['cfg-opt', 'cfg-fov', 'cfg-net', 'cfg-hud', 'cfg-move'].forEach(id => {
+                document.getElementById(id).addEventListener('change', generateAutoexec);
+            });
+
+            // Копирование autoexec
+            document.getElementById('btn-copy-autoexec').addEventListener('click', () => {
+                const text = document.getElementById('autoexec-output').textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('btn-copy-autoexec');
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ Скопировано!';
+                    btn.style.background = 'var(--green)';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            });
+
+            // Скачивание autoexec
+            document.getElementById('btn-download-autoexec').addEventListener('click', () => {
+                const text = generateAutoexec();
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'autoexec.cfg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // ==========================================
+            // БЛОК 2: Классовые бинды
+            // ==========================================
+            const classBinds = {
+                soldier: {
+                    name: 'Солдат (Soldier)',
+                    desc: 'Идеальный Rocket Jump в 1 кнопку. Прыжок + приседание + выстрел.',
+                    code: `// Soldier.cfg - Rocket Jump
+alias +rocketjump "+jump; +duck; +attack"
+alias -rocketjump "-jump; -duck; -attack"
+bind "MOUSE2" "+rocketjump"
+bind "SHIFT" "+rocketjump"
+
+// Сброс биндов для других классов (опционально)
+// bind "MOUSE2" "+attack2"`
+                },
+                medic: {
+                    name: 'Медик (Medic)',
+                    desc: 'Радар раненых союзников и маскировка Убера.',
+                    code: `// Medic.cfg - Heal & Uber
+hud_medicautocallersthreshold 150
+bind "E" "voicemenu 0 0"
+
+// Сброс
+// bind "E" "+use"`
+                },
+                spy: {
+                    name: 'Шпион (Spy)',
+                    desc: 'Быстрая смена маскировки на цифровых клавишах.',
+                    code: `// Spy.cfg - Fast Disguise
+bind "KP_END" "disguise 1 -1" // Scout
+bind "KP_DOWNARROW" "disguise 2 -1" // Soldier
+bind "KP_PGDN" "disguise 3 -1" // Pyro
+bind "KP_LEFTARROW" "disguise 4 -1" // Demoman
+bind "KP_5" "disguise 5 -1" // Heavy
+bind "KP_RIGHTARROW" "disguise 6 -1" // Engineer
+bind "KP_HOME" "disguise 7 -1" // Medic
+bind "KP_UPARROW" "disguise 8 -1" // Sniper
+bind "KP_PGUP" "disguise 9 -1" // Spy`
+                },
+                engineer: {
+                    name: 'Инженер (Engineer)',
+                    desc: 'Быстрая постройка и уничтожение турели, раздатчика и телепорта.',
+                    code: `// Engineer.cfg - Fast Build
+bind "F1" "destroy 2 0; build 2 0"
+bind "F2" "destroy 0 0; build 0 0"
+bind "F3" "destroy 1 0; build 1 0"`
+                }
+            };
+
+            let currentClass = 'soldier';
+
+            function renderClass() {
+                const c = classBinds[currentClass];
+                document.getElementById('class-bind-description').textContent = c.desc;
+                document.getElementById('class-output').textContent = c.code;
+            }
+
+            document.querySelectorAll('.class-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentClass = tab.dataset.class;
+                    renderClass();
+                });
+            });
+
+            // Копирование классовых биндов
+            document.getElementById('btn-copy-class').addEventListener('click', () => {
+                const text = document.getElementById('class-output').textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('btn-copy-class');
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ Скопировано!';
+                    btn.style.background = 'var(--green)';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            });
+
+            // Скачивание классового файла
+            document.getElementById('btn-download-class').addEventListener('click', () => {
+                const text = document.getElementById('class-output').textContent;
+                const filename = currentClass + '.cfg';
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // ==========================================
+            // БЛОК 3: Параметры запуска
+            // ==========================================
+            function generateLaunch() {
+                let opts = [];
+
+                if (document.getElementById('launch-novid').checked) opts.push('-novid');
+                if (document.getElementById('launch-nojoy').checked) opts.push('-nojoy');
+                if (document.getElementById('launch-nosteamcontroller').checked) opts.push('-nosteamcontroller');
+                if (document.getElementById('launch-nohltv').checked) opts.push('-nohltv');
+                if (document.getElementById('launch-particles').checked) opts.push('-particles 1');
+                if (document.getElementById('launch-dx81').checked) opts.push('-dxlevel 81');
+
+                const result = opts.join(' ');
+                document.getElementById('launch-output').textContent = result || '// Нет выбранных параметров';
+                return result;
+            }
+
+            ['launch-novid', 'launch-nojoy', 'launch-nosteamcontroller', 'launch-nohltv', 'launch-particles', 'launch-dx81'].forEach(id => {
+                document.getElementById(id).addEventListener('change', generateLaunch);
+            });
+
+            // Копирование параметров запуска
+            document.getElementById('btn-copy-launch').addEventListener('click', () => {
+                const text = document.getElementById('launch-output').textContent;
+                if (text === '// Нет выбранных параметров') return;
+                
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('btn-copy-launch');
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ Скопировано!';
+                    btn.style.background = 'var(--green)';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            });
+
+            // ==========================================
+            // ИНИЦИАЛИЗАЦИЯ
+            // ==========================================
+            generateAutoexec();
+            renderClass();
+            generateLaunch();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

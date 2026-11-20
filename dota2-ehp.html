@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор EHP и Брони Dota 2 | VALVE HUB</title>
+    <meta name="description" content="Калькулятор эффективного здоровья (EHP) Dota 2. Расчет физической брони, сопротивления магии, входящего урона и сравнение защитных предметов.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .ehp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .ehp-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .ehp-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .ehp-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .ehp-value.phys { color: var(--gold); }
+        .ehp-value.mag { color: #a3e635; }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .compare-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .compare-card:hover {
+            border-color: var(--accent);
+        }
+        .compare-card.active {
+            border-color: var(--green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        .compare-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .compare-title {
+            font-weight: 700;
+            color: #fff;
+            font-size: 15px;
+        }
+        .compare-stats {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .text-green { color: var(--green); }
+        .text-red { color: var(--red); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Калькулятор EHP Dota 2</h1>
+            <p style="color: var(--text-muted);">Расчёт выживаемости, брони и сопротивления магии.</p>
+        </div>
+
+        <!-- БЛОК 1: Основные параметры и EHP -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🛡️ Блок 1: Параметры героя и EHP</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Максимальное HP</label>
+                    <input type="number" id="hero-hp" value="2200" min="100" max="15000" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Физическая броня (Armor)</label>
+                    <input type="number" id="hero-armor" value="14" min="-30" max="100" step="1">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Базовое сопротивление магии (%)</label>
+                    <input type="number" id="base-mag-res" value="25" min="0" max="100" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Доп. маг. резист от способностей (%)</label>
+                    <input type="number" id="extra-mag-res" value="0" min="0" max="100" step="1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Предметы на маг. резист (выберите):</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="chip" style="padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;" onclick="toggleItem('cloak')">Cloak (+20%)</div>
+                    <div class="chip" style="padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;" onclick="toggleItem('pipe')">Pipe (+30%)</div>
+                    <div class="chip" style="padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;" onclick="toggleItem('shroud')">Eternal Shroud (+35%)</div>
+                    <div class="chip" style="padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;" onclick="toggleItem('glimmer')">Glimmer (+25%)</div>
+                </div>
+                <div id="selected-items-display" style="margin-top: 10px; font-size: 13px; color: var(--gold);"></div>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="use-vanguard" style="width: 20px; height: 20px; accent-color: var(--accent);">
+                    Учитывать блок урона (Vanguard / Crimson Guard — 70 урона с шансом 60%)
+                </label>
+            </div>
+
+            <div class="results-box">
+                <div class="ehp-grid">
+                    <div class="ehp-card">
+                        <div class="ehp-label">Физическое EHP</div>
+                        <div class="ehp-value phys" id="phys-ehp">0</div>
+                    </div>
+                    <div class="ehp-card">
+                        <div class="ehp-label">Магическое EHP</div>
+                        <div class="ehp-value mag" id="mag-ehp">0</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                        <span>Снижение физ. урона</span>
+                        <span id="phys-res-pct" style="color: var(--gold); font-weight: 700;">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="phys-bar" style="width: 0%; background: var(--gold);"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                        <span>Снижение маг. урона</span>
+                        <span id="mag-res-pct" style="color: #a3e635; font-weight: 700;">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="mag-bar" style="width: 0%; background: #a3e635;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Сравнение предметов -->
+        <section class="calculator-section">
+            <h2 class="calc-title">⚖️ Блок 2: Что выгоднее купить?</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">Выберите предмет, чтобы увидеть, как изменится ваша живучесть.</p>
+
+            <div id="compare-list">
+                <div class="compare-card" onclick="selectItem('heart')">
+                    <div class="compare-header">
+                        <span class="compare-title">Heart of Tarrasque</span>
+                        <span class="badge badge-common">+900 HP</span>
+                    </div>
+                    <div class="compare-stats" id="stat-heart">Выберите для расчета...</div>
+                </div>
+
+                <div class="compare-card" onclick="selectItem('assault')">
+                    <div class="compare-header">
+                        <span class="compare-title">Assault Cuirass</span>
+                        <span class="badge badge-common">+15 Armor</span>
+                    </div>
+                    <div class="compare-stats" id="stat-assault">Выберите для расчета...</div>
+                </div>
+
+                <div class="compare-card" onclick="selectItem('shiva')">
+                    <div class="compare-header">
+                        <span class="compare-title">Shiva's Guard</span>
+                        <span class="badge badge-common">+16 Armor</span>
+                    </div>
+                    <div class="compare-stats" id="stat-shiva">Выберите для расчета...</div>
+                </div>
+
+                <div class="compare-card" onclick="selectItem('shroud')">
+                    <div class="compare-header">
+                        <span class="compare-title">Eternal Shroud</span>
+                        <span class="badge badge-common">+250 HP / +35% MagRes</span>
+                    </div>
+                    <div class="compare-stats" id="stat-shroud">Выберите для расчета...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 3: Входящий урон -->
+        <section class="calculator-section">
+            <h2 class="calc-title">💥 Блок 3: Калькулятор входящего урона</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Сырой урон врага</label>
+                    <input type="number" id="incoming-dmg" value="850" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Тип урона</label>
+                    <select id="dmg-type">
+                        <option value="phys">Физический</option>
+                        <option value="mag">Магический</option>
+                        <option value="pure">Чистый (Pure)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Реальный урон по HP:</span>
+                    <span id="real-dmg" class="text-red" style="font-size: 20px; font-weight: 800;">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Вы переживете таких ударов:</span>
+                    <span id="hits-survived" style="font-size: 20px; font-weight: 800; color: var(--green);">0</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ по EHP</h2>
+            <div class="faq-item">
+                <h3>Как работает отрицательная броня в Dota 2?</h3>
+                <p>Формула брони едина для всех значений: <code>Снижение = (0.06 * Броня) / (1 + 0.06 * |Броня|)</code>. Если броня отрицательная, то снижение урона тоже становится отрицательным, что означает <b>увеличение</b> входящего физического урона. Например, при -10 брони вы получаете на 37.5% больше урона.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Почему источники маг. резиста перемножаются?</h3>
+                <p>В Dota 2 сопротивление магии не складывается простым плюсом. Оно рассчитывается по формуле: <code>1 - ((1 - A) * (1 - B) * (1 - C))</code>. Если у вас 25% базового резиста и вы покупаете Pipe (+30%), итоговое сопротивление будет не 55%, а 47.5%. Это сделано для баланса, чтобы нельзя было достичь 100% неуязвимости к магии.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        // Состояние
+        let selectedItems = [];
+        let activeCompareItem = null;
+
+        window.onload = function() {
+            // Слушатели для инпутов
+            const inputs = ['hero-hp', 'hero-armor', 'base-mag-res', 'extra-mag-res', 'use-vanguard', 'incoming-dmg', 'dmg-type'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', calcAll);
+                if (el) el.addEventListener('change', calcAll);
+            });
+
+            calcAll();
+        };
+
+        // Переключение предметов в Блоке 1
+        window.toggleItem = function(item) {
+            const el = event.target;
+            if (el.classList.contains('active')) {
+                el.classList.remove('active');
+                el.style.borderColor = 'var(--border)';
+                selectedItems = selectedItems.filter(i => i !== item);
+            } else {
+                el.classList.add('active');
+                el.style.borderColor = 'var(--accent)';
+                selectedItems.push(item);
+            }
+            updateItemDisplay();
+            calcAll();
+        };
+
+        function updateItemDisplay() {
+            const map = { cloak: 'Cloak (+20%)', pipe: 'Pipe (+30%)', shroud: 'Eternal Shroud (+35%)', glimmer: 'Glimmer (+25%)' };
+            const display = document.getElementById('selected-items-display');
+            if (selectedItems.length === 0) {
+                display.textContent = 'Предметы не выбраны';
+            } else {
+                display.textContent = 'Выбрано: ' + selectedItems.map(i => map[i]).join(', ');
+            }
+        }
+
+        // Основная математика
+        function getStats(hp, armor, baseMagRes, extraMagRes, useVanguard) {
+            // Физическое сопротивление
+            let physRes = (0.06 * armor) / (1 + 0.06 * Math.abs(armor));
+            if (physRes > 1) physRes = 1; // Ограничение для очень большой брони (недостижимо, но на всякий)
+            
+            // EHP физическое
+            let physEhp = hp / (1 - physRes);
+            if (useVanguard) {
+                // Vanguard: блокирует 70 урона с шансом 60% (в среднем 42 урона за удар)
+                // Но для EHP это сложно считать, поэтому упростим:
+                // Просто добавим 10% к эффективному HP (грубая оценка)
+                physEhp *= 1.1;
+            }
+
+            // Магическое сопротивление
+            let totalMagRes = 1;
+            const itemMags = selectedItems.map(i => {
+                if (i === 'cloak') return 0.20;
+                if (i === 'pipe') return 0.30;
+                if (i === 'shroud') return 0.35;
+                if (i === 'glimmer') return 0.25;
+                return 0;
+            });
+
+            // Формула: 1 - ((1 - base) * (1 - extra) * (1 - item1) * ...)
+            let magRes = 1 - (1 - baseMagRes / 100) * (1 - extraMagRes / 100);
+            itemMags.forEach(m => {
+                magRes = magRes * (1 - m);
+            });
+            totalMagRes = 1 - magRes;
+
+            let magEhp = hp / (1 - totalMagRes);
+            if (magEhp < hp) magEhp = hp; // Защита от багов
+
+            return {
+                physRes: physRes,
+                magRes: totalMagRes,
+                physEhp: physEhp,
+                magEhp: magEhp,
+                hp: hp,
+                armor: armor,
+                baseMagRes: baseMagRes,
+                extraMagRes: extraMagRes,
+                useVanguard: useVanguard
+            };
+        }
+
+        // Обновление всего
+        function calcAll() {
+            const hp = parseFloat(document.getElementById('hero-hp').value) || 100;
+            const armor = parseFloat(document.getElementById('hero-armor').value) || 0;
+            const baseMag = parseFloat(document.getElementById('base-mag-res').value) || 0;
+            const extraMag = parseFloat(document.getElementById('extra-mag-res').value) || 0;
+            const useVanguard = document.getElementById('use-vanguard').checked;
+
+            const stats = getStats(hp, armor, baseMag, extraMag, useVanguard);
+
+            // Вывод EHP
+            document.getElementById('phys-ehp').textContent = Math.round(stats.physEhp);
+            document.getElementById('mag-ehp').textContent = Math.round(stats.magEhp);
+            
+            // Проценты
+            document.getElementById('phys-res-pct').textContent = (stats.physRes * 100).toFixed(1) + '%';
+            document.getElementById('mag-res-pct').textContent = (stats.magRes * 100).toFixed(1) + '%';
+
+            // Полоски
+            document.getElementById('phys-bar').style.width = Math.min(100, Math.max(0, stats.physRes * 100)) + '%';
+            document.getElementById('mag-bar').style.width = Math.min(100, Math.max(0, stats.magRes * 100)) + '%';
+
+            // Пересчет сравнения, если выбран предмет
+            if (activeCompareItem) {
+                updateCompare(activeCompareItem, stats);
+            }
+
+            // Пересчет входящего урона
+            calcIncoming(stats);
+        }
+
+        // Блок 2: Сравнение
+        window.selectItem = function(item) {
+            activeCompareItem = item;
+            
+            document.querySelectorAll('.compare-card').forEach(c => c.classList.remove('active'));
+            const el = event.currentTarget;
+            if (el) el.classList.add('active');
+
+            const hp = parseFloat(document.getElementById('hero-hp').value) || 100;
+            const armor = parseFloat(document.getElementById('hero-armor').value) || 0;
+            const baseMag = parseFloat(document.getElementById('base-mag-res').value) || 0;
+            const extraMag = parseFloat(document.getElementById('extra-mag-res').value) || 0;
+            const useVanguard = document.getElementById('use-vanguard').checked;
+
+            const currentStats = getStats(hp, armor, baseMag, extraMag, useVanguard);
+            updateCompare(item, currentStats);
+        };
+
+        function updateCompare(item, currentStats) {
+            const hp = currentStats.hp;
+            const armor = currentStats.armor;
+            const baseMag = currentStats.baseMagRes;
+            const extraMag = currentStats.extraMagRes;
+            const vanguard = currentStats.useVanguard;
+
+            let newHp = hp;
+            let newArmor = armor;
+            let newBaseMag = baseMag;
+            let newExtraMag = extraMag;
+
+            if (item === 'heart') newHp += 900;
+            else if (item === 'assault') newArmor += 15;
+            else if (item === 'shiva') newArmor += 16;
+            else if (item === 'shroud') { newHp += 250; newExtraMag += 35; }
+
+            const newStats = getStats(newHp, newArmor, newBaseMag, newExtraMag, vanguard);
+            
+            const physDiff = newStats.physEhp - currentStats.physEhp;
+            const physPct = (physDiff / currentStats.physEhp * 100).toFixed(1);
+            
+            const magDiff = newStats.magEhp - currentStats.magEhp;
+            const magPct = (magDiff / currentStats.magEhp * 100).toFixed(1);
+
+            const el = document.getElementById('stat-' + item);
+            if (el) {
+                el.innerHTML = `
+                    Физ. EHP: <span class="text-green">+${Math.round(physDiff)} (+${physPct}%)</span><br>
+                    Маг. EHP: <span class="text-green">+${Math.round(magDiff)} (+${magPct}%)</span>
+                `;
+            }
+        }
+
+        // Блок 3: Входящий урон
+        function calcIncoming(stats) {
+            const dmg = parseFloat(document.getElementById('incoming-dmg').value) || 0;
+            const type = document.getElementById('dmg-type').value;
+
+            let realDmg = 0;
+            if (type === 'phys') {
+                let reduction = stats.physRes;
+                if (stats.useVanguard) reduction += 0.05; // Упрощенный блок
+                reduction = Math.min(0.95, Math.max(-1, reduction)); // Ограничения
+                realDmg = dmg * (1 - reduction);
+            } else if (type === 'mag') {
+                realDmg = dmg * (1 - stats.magRes);
+            } else {
+                realDmg = dmg; // Pure
+            }
+
+            realDmg = Math.max(0, realDmg);
+            const hits = Math.floor(stats.hp / realDmg);
+
+            document.getElementById('real-dmg').textContent = Math.round(realDmg);
+            document.getElementById('hits-survived').textContent = hits;
+        }
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

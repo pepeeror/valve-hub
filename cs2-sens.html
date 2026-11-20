@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор чувствительности CS2 (eDPI и cm/360) | VALVE HUB</title>
+    <meta name="description" content="Рассчитайте eDPI, сантиметры на разворот 360 градусов и сконвертируйте чувствительность между CS2, Valorant, Apex Legends и TF2.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .chip-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .chip {
+            padding: 6px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .chip:hover { border-color: var(--accent); }
+        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        .style-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+            text-align: center;
+            width: 100%;
+        }
+        .style-low { background: rgba(59, 130, 246, 0.15); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .style-gold { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .style-high { background: rgba(245, 158, 11, 0.15); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .style-extreme { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .big-result {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            margin: 10px 0;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .result-sub {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .pro-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .pro-table th {
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .pro-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .pro-table .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .conv-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .conv-box:last-child { margin-bottom: 0; }
+        .conv-game { font-weight: 700; color: #fff; font-size: 15px; }
+        .conv-val { font-weight: 800; color: var(--gold); font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Калькулятор чувствительности CS2</h1>
+            <p style="color: var(--text-muted);">eDPI, cm/360° и конвертер между играми.</p>
+        </div>
+
+        <!-- БЛОК 1: Основной калькулятор -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🖱️ Блок 1: Параметры мыши и eDPI</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>DPI мыши</label>
+                    <input type="number" id="dpi" value="800" min="100" max="32000" step="100">
+                    <div class="chip-group">
+                        <div class="chip" data-dpi="400">400</div>
+                        <div class="chip active" data-dpi="800">800</div>
+                        <div class="chip" data-dpi="1600">1600</div>
+                        <div class="chip" data-dpi="3200">3200</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Чувствительность в CS2</label>
+                    <input type="number" id="sens" value="1.00" min="0.01" max="10" step="0.01">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Множитель зума (Zoom Sens)</label>
+                    <input type="number" id="zoom" value="1.00" min="0.1" max="2.0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Ускорение Windows (Pointer Speed)</label>
+                    <select id="win-mult">
+                        <option value="1.0">6/11 (Стандарт / Raw Input 1)</option>
+                        <option value="0.75">5/11 (Замедление)</option>
+                        <option value="1.5">7/11 (Ускорение)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="big-result" id="edpi-result">800</div>
+                <div class="result-sub">Ваш eDPI в CS2</div>
+                
+                <div class="result-row">
+                    <span>Зум eDPI (Zoom eDPI):</span>
+                    <span id="zoom-edpi" style="color: var(--text-main); font-weight: 600;">800</span>
+                </div>
+                <div class="result-row">
+                    <span>Дюймов на разворот 360° (in/360°):</span>
+                    <span id="in-360" style="color: var(--text-main); font-weight: 600;">20.45</span>
+                </div>
+                <div class="result-row" style="font-size: 18px;">
+                    <span>Сантиметров на разворот 360° (cm/360°):</span>
+                    <span id="cm-360" class="text-gold" style="font-size: 22px;">51.9 см</span>
+                </div>
+                <div class="style-badge style-gold" id="style-badge">Золотой стандарт про-сцены</div>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Конвертер -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🔄 Блок 2: Конвертер чувствительности</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Исходная игра</label>
+                    <select id="conv-source">
+                        <option value="cs2">CS2 / TF2 / Apex Legends</option>
+                        <option value="valorant">Valorant</option>
+                        <option value="overwatch">Overwatch 2</option>
+                        <option value="pubg">PUBG</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ваша чувствительность в этой игре</label>
+                    <input type="number" id="conv-sens" value="1.00" min="0.01" step="0.01">
+                </div>
+            </div>
+
+            <div class="results-box" style="padding: 15px;">
+                <div class="conv-box">
+                    <span class="conv-game">CS2 / TF2 / Apex</span>
+                    <span class="conv-val" id="conv-cs2">1.00</span>
+                </div>
+                <div class="conv-box">
+                    <span class="conv-game">Valorant</span>
+                    <span class="conv-val" id="conv-valorant">0.31</span>
+                </div>
+                <div class="conv-box">
+                    <span class="conv-game">Overwatch 2</span>
+                    <span class="conv-val" id="conv-overwatch">3.33</span>
+                </div>
+                <div class="conv-box">
+                    <span class="conv-game">PUBG (общая сенса)</span>
+                    <span class="conv-val" id="conv-pubg">1.00</span>
+                </div>
+            </div>
+
+            <button id="btn-copy-sens" class="btn" style="margin-top: 10px;">📋 Скопировать команду sensitivity</button>
+        </section>
+
+        <!-- БЛОК 3: Таблица про-игроков -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🏆 Блок 3: Настройки про-игроков CS2</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">Нажмите «Применить», чтобы подставить настройки в калькулятор выше.</p>
+            
+            <table class="pro-table">
+                <thead>
+                    <tr>
+                        <th>Игрок</th>
+                        <th>DPI</th>
+                        <th>Sens</th>
+                        <th>eDPI</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="pro-tbody">
+                    <!-- Заполняется через JS -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ</h2>
+            <div class="faq-item">
+                <h3>Что такое eDPI в CS2?</h3>
+                <p>eDPI (Effective DPI) — это произведение DPI вашей мыши на чувствительность в игре. Оно показывает, сколько «пикселей» проходит курсор при движении мыши на один дюйм. Это единая метрика для сравнения стилей аима, потому что у игроков могут быть разные DPI, но одинаковый eDPI.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Почему лучше отключить акселерацию мыши в Windows?</h3>
+                <p>Ускорение мыши (Pointer Precision) делает так, что чем быстрее вы двигаете мышь, тем дальше уезжает курсор. Это ломает мышечную память. В CS2 (Source 2) есть встроенный Raw Input, но лучше перестраховаться и в настройках Windows снять галочку «Включить повышенную точность указателя», а также поставить скорость указателя на 6/11 (стандарт).</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            const DPI_INPUT = document.getElementById('dpi');
+            const SENS_INPUT = document.getElementById('sens');
+            const ZOOM_INPUT = document.getElementById('zoom');
+            const WIN_SELECT = document.getElementById('win-mult');
+            
+            const EDPI_RES = document.getElementById('edpi-result');
+            const ZOOM_EDPI = document.getElementById('zoom-edpi');
+            const IN_360 = document.getElementById('in-360');
+            const CM_360 = document.getElementById('cm-360');
+            const STYLE_BADGE = document.getElementById('style-badge');
+
+            // --- Основной калькулятор ---
+            function calcSens() {
+                const dpi = parseFloat(DPI_INPUT.value) || 800;
+                const sens = parseFloat(SENS_INPUT.value) || 1.0;
+                const zoom = parseFloat(ZOOM_INPUT.value) || 1.0;
+                const winMult = parseFloat(WIN_SELECT.value) || 1.0;
+
+                // eDPI = DPI * Sens * WinMult
+                const edpi = dpi * sens * winMult;
+                EDPI_RES.textContent = Math.round(edpi);
+
+                // Zoom eDPI
+                const zEdpi = edpi * zoom;
+                ZOOM_EDPI.textContent = Math.round(zEdpi);
+
+                // CM/360 (Source yaw = 0.022)
+                const cm360 = (360 / (edpi * 0.022)) * 2.54;
+                const in360 = cm360 / 2.54;
+
+                CM_360.textContent = cm360.toFixed(1) + ' см';
+                IN_360.textContent = in360.toFixed(2);
+
+                // Стиль
+                let styleText = '';
+                let styleClass = '';
+                if (edpi < 600) {
+                    styleText = 'Очень низкая (стиль NiKo / Twistzz)';
+                    styleClass = 'style-low';
+                } else if (edpi >= 600 && edpi <= 1000) {
+                    styleText = 'Золотой стандарт про-сцены';
+                    styleClass = 'style-gold';
+                } else if (edpi > 1000 && edpi <= 1400) {
+                    styleText = 'Повышенная (агрессивный аим)';
+                    styleClass = 'style-high';
+                } else {
+                    styleText = 'Слишком высокая (сложно контролировать)';
+                    styleClass = 'style-extreme';
+                }
+                STYLE_BADGE.textContent = styleText;
+                STYLE_BADGE.className = 'style-badge ' + styleClass;
+
+                // Обновляем конвертер
+                updateConverter('cs2');
+            }
+
+            // --- Обработка чипов DPI ---
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    DPI_INPUT.value = chip.dataset.dpi;
+                    calcSens();
+                });
+            });
+
+            // Слушатели
+            DPI_INPUT.addEventListener('input', () => {
+                document.querySelectorAll('.chip').forEach(c => {
+                    if (c.dataset.dpi === DPI_INPUT.value) c.classList.add('active');
+                    else c.classList.remove('active');
+                });
+                calcSens();
+            });
+            SENS_INPUT.addEventListener('input', calcSens);
+            ZOOM_INPUT.addEventListener('input', calcSens);
+            WIN_SELECT.addEventListener('change', calcSens);
+
+
+            // --- Блок 2: Конвертер ---
+            const CONV_SOURCE = document.getElementById('conv-source');
+            const CONV_SENS = document.getElementById('conv-sens');
+            
+            function updateConverter(sourceGame) {
+                let baseCs2 = 0;
+                
+                // Приводим всё к CS2
+                if (sourceGame === 'cs2') {
+                    baseCs2 = parseFloat(CONV_SENS.value) || 0;
+                } else if (sourceGame === 'valorant') {
+                    baseCs2 = (parseFloat(CONV_SENS.value) || 0) * 3.181818;
+                } else if (sourceGame === 'overwatch') {
+                    baseCs2 = (parseFloat(CONV_SENS.value) || 0) / 3.333333;
+                } else if (sourceGame === 'pubg') {
+                    baseCs2 = (parseFloat(CONV_SENS.value) || 0); // Условно 1 к 1
+                }
+
+                // Из CS2 во все остальные
+                document.getElementById('conv-cs2').textContent = baseCs2.toFixed(3);
+                document.getElementById('conv-valorant').textContent = (baseCs2 / 3.181818).toFixed(3);
+                document.getElementById('conv-overwatch').textContent = (baseCs2 * 3.333333).toFixed(3);
+                document.getElementById('conv-pubg').textContent = baseCs2.toFixed(3);
+            }
+
+            CONV_SOURCE.addEventListener('change', () => {
+                // При смене игры сбрасываем значение на дефолт для этой игры, если нужно
+                // Но проще просто пересчитать то, что есть
+                updateConverter(CONV_SOURCE.value);
+            });
+            CONV_SENS.addEventListener('input', () => {
+                updateConverter(CONV_SOURCE.value);
+            });
+
+            // Кнопка копирования
+            document.getElementById('btn-copy-sens').addEventListener('click', () => {
+                const cs2Val = document.getElementById('conv-cs2').textContent;
+                const cmd = `sensitivity ${cs2Val}`;
+                
+                navigator.clipboard.writeText(cmd).then(() => {
+                    const btn = document.getElementById('btn-copy-sens');
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ Скопировано!';
+                    btn.style.background = 'var(--green)';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            });
+
+
+            // --- Блок 3: Таблица про ---
+            const pros = [
+                { name: 'donk', dpi: 800, sens: 1.25, zoom: 1.0 },
+                { name: 'm0NESY', dpi: 400, sens: 2.30, zoom: 1.0 },
+                { name: 's1mple', dpi: 400, sens: 3.09, zoom: 1.0 },
+                { name: 'ZywOo', dpi: 400, sens: 1.95, zoom: 1.0 },
+                { name: 'NiKo', dpi: 800, sens: 0.76, zoom: 0.90 }
+            ];
+
+            const tbody = document.getElementById('pro-tbody');
+            pros.forEach(p => {
+                const edpi = p.dpi * p.sens;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 700; color: #fff;">${p.name}</td>
+                    <td>${p.dpi}</td>
+                    <td>${p.sens.toFixed(2)}</td>
+                    <td style="color: var(--gold); font-weight: 600;">${Math.round(edpi)}</td>
+                    <td><button class="btn btn-apply" data-dpi="${p.dpi}" data-sens="${p.sens}" data-zoom="${p.zoom}">Применить</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('.btn-apply').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    DPI_INPUT.value = btn.dataset.dpi;
+                    SENS_INPUT.value = btn.dataset.sens;
+                    ZOOM_INPUT.value = btn.dataset.zoom;
+                    WIN_SELECT.value = "1.0"; // Сбрасываем на стандарт
+                    
+                    // Обновляем чипы
+                    document.querySelectorAll('.chip').forEach(c => {
+                        if (c.dataset.dpi === btn.dataset.dpi) c.classList.add('active');
+                        else c.classList.remove('active');
+                    });
+
+                    calcSens();
+                    
+                    // Прокрутка к результату
+                    document.querySelector('.big-result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            });
+
+            // Первичный расчет
+            calcSens();
+            updateConverter('cs2');
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

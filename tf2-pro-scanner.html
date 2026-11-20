@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO Сканер TF2 (Ключи, MvM, Арбитраж) | VALVE HUB</title>
+    <meta name="description" content="Флагманский PRO-инструмент для трейдеров TF2: пополнение Steam через ключи, профит Killstreak-наборов, сканер арбитража, ROI ящиков, MvM-туры и оценка наценки.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .pro-lock-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 18, 24, 0.7);
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .pro-lock-content {
+            background: var(--bg-card); padding: 20px; border-radius: 12px;
+            border: 1px solid var(--accent); text-align: center; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .pro-lock-content h3 { color: var(--gold); margin-bottom: 10px; font-size: 18px; }
+        .pro-lock-content p { color: var(--text-muted); font-size: 13px; margin-bottom: 15px; }
+        .table-container { position: relative; overflow: hidden; min-height: 200px; }
+        .pro-table { width: 100%; border-collapse: collapse; }
+        .pro-table th {
+            text-align: left; font-size: 12px; color: var(--text-muted);
+            padding: 10px; border-bottom: 1px solid var(--border); background: var(--bg-input);
+        }
+        .pro-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-main); }
+        .pro-table tr:hover { background: rgba(255,255,255,0.02); }
+        .profit-green { color: var(--green); font-weight: 800; }
+        .roi-badge { background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
+        
+        .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .chip { padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .chip:hover { border-color: var(--accent); }
+        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        .roi-box { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .roi-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; border-bottom: 1px dashed var(--border); }
+        .roi-row:last-child { border-bottom: none; }
+        
+        .pro-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .feature-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+        .feature-card h4 { color: var(--accent); margin-bottom: 10px; }
+        .feature-card p { font-size: 13px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span> <span style="font-size: 10px; background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle;">PRO</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">PRO Сканер TF2 <span style="font-size: 14px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 6px; vertical-align: middle;">PREMIUM</span></h1>
+            <p style="color: var(--text-muted);">6 инструментов для трейдеров, MvM-игроков и скупщиков.</p>
+        </div>
+
+        <!-- БЛОК 1: Пополнение Steam -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📈 Блок 1: Пополнение Steam в «+» через ключи</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Бюджет пополнения</label>
+                    <input type="number" id="tf2-budget" value="5000" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Валюта</label>
+                    <select id="tf2-currency">
+                        <option value="RUB">RUB ₽</option>
+                        <option value="USD">USD $</option>
+                        <option value="BYN">BYN</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Площадка покупки</label>
+                    <select id="tf2-platform">
+                        <option value="lavka">TF2Lavka / Маркеты РФ</option>
+                        <option value="lis">Lis-Skins</option>
+                        <option value="marketplace">Marketplace.tf</option>
+                        <option value="p2p">P2P скупщики</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container" id="tf2-table-container">
+                <table class="pro-table">
+                    <thead>
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Маркет ($)</th>
+                            <th>Steam (чистыми)</th>
+                            <th>Штук на бюджет</th>
+                            <th>Профит / ROI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tf2-tbody"></tbody>
+                </table>
+                <div id="tf2-lock" class="pro-lock-overlay" style="display: none;">
+                    <div class="pro-lock-content">
+                        <h3>🔒 Доступно в PRO-подписке</h3>
+                        <p>Получите доступ к связкам пополнения Steam.</p>
+                        <input type="text" id="pro-key-tf2" placeholder="Введите ключ (VALVE2026)" style="width: 100%; margin-bottom: 10px; text-align: center;">
+                        <button class="btn" onclick="unlockPro()">Получить PRO-доступ</button>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button id="btn-add-tf2" class="btn" style="width: auto;">+ Добавить связку</button>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Killstreak Fabricator -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🔧 Блок 2: Профит крафта Killstreak-наборов</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Тип фабрикатора</label>
+                    <select id="ks-type">
+                        <option value="specialized">Specialized Killstreak Kit</option>
+                        <option value="professional">Professional Killstreak Kit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Стоимость запчастей (Ref)</label>
+                    <input type="number" id="ks-parts" value="10" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Стоимость оружия для крафта (Ref)</label>
+                    <input type="number" id="ks-weapon" value="5" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Цена продажи готового набора (Ref)</label>
+                    <input type="number" id="ks-sell" value="35" step="0.01" min="0">
+                </div>
+            </div>
+
+            <div class="roi-box">
+                <div class="roi-row">
+                    <span>Себестоимость сборки:</span>
+                    <span id="ks-cost" style="font-weight: 700; color: var(--red);">0.00 Ref</span>
+                </div>
+                <div class="roi-row">
+                    <span>Чистая выручка (после -15%):</span>
+                    <span id="ks-revenue" style="font-weight: 700; color: var(--green);">0.00 Ref</span>
+                </div>
+                <div class="roi-row" style="border-bottom: none;">
+                    <span>Чистый профит:</span>
+                    <span id="ks-profit" style="font-size: 20px; font-weight: 800; color: var(--gold);">0.00 Ref</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="ks-verdict" class="roi-badge" style="font-size: 13px; padding: 6px 12px;">—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 3: Сканер арбитража (PRO) -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🔍 Блок 3: Сканер арбитража (Backpack.tf ↔ Steam)</h2>
+            
+            <div class="table-container" id="arb-table-container">
+                <table class="pro-table">
+                    <thead>
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Покупка (Ref)</th>
+                            <th>Продажа (Ref)</th>
+                            <th>Профит (Ref / %)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="arb-tbody"></tbody>
+                </table>
+                <div id="arb-lock" class="pro-lock-overlay" style="display: none;">
+                    <div class="pro-lock-content">
+                        <h3>🔒 Доступно в PRO-подписке</h3>
+                        <p>Получите доступ к арбитражным связкам TF2.</p>
+                        <input type="text" id="pro-key-arb" placeholder="Введите ключ (VALVE2026)" style="width: 100%; margin-bottom: 10px; text-align: center;">
+                        <button class="btn" onclick="unlockPro()">Получить PRO-доступ</button>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button id="btn-add-arb" class="btn" style="width: auto;">+ Добавить связку</button>
+            </div>
+        </section>
+
+        <!-- БЛОК 4: Unboxing ROI (PRO) -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🎁 Блок 4: Симулятор окупаемости открытия ящиков</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Количество открытий</label>
+                    <input type="number" id="ub-count" value="20" step="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Цена 1 ключа ($)</label>
+                    <input type="number" id="ub-key-price" value="2.50" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена 1 ящика ($)</label>
+                    <input type="number" id="ub-crate-price" value="0.10" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Средняя цена обычной шапки ($)</label>
+                    <input type="number" id="ub-common" value="1.50" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Средняя цена редкой (Strange / Assassin) ($)</label>
+                    <input type="number" id="ub-rare" value="15.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Средняя цена Unusual ($)</label>
+                    <input type="number" id="ub-unusual" value="150.00" step="0.01" min="0">
+                </div>
+            </div>
+
+            <div class="roi-box">
+                <div class="roi-row">
+                    <span>Общие затраты:</span>
+                    <span id="ub-cost" style="font-weight: 700; color: var(--red);">0.00 $</span>
+                </div>
+                <div class="roi-row">
+                    <span>Шанс выбить Unusual:</span>
+                    <span id="ub-chance" style="font-weight: 700; color: var(--gold);">0%</span>
+                </div>
+                <div class="roi-row" style="border-bottom: none;">
+                    <span>Ожидаемая выплата (EV):</span>
+                    <span id="ub-ev" style="font-size: 20px; font-weight: 800; color: var(--gold);">0.00 $</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="ub-verdict" class="roi-badge" style="font-size: 13px; padding: 6px 12px;">—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 5: MvM Tour Profit (PRO) -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🤖 Блок 5: Окупаемость туров MvM (Two Cities)</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Количество туров</label>
+                    <input type="number" id="mvm-tours" value="10" step="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Цена 1 билета ($)</label>
+                    <input type="number" id="mvm-ticket" value="0.95" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Средний возврат с запчастей ($)</label>
+                    <input type="number" id="mvm-return" value="1.60" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Средняя цена Australium ($)</label>
+                    <input type="number" id="mvm-australium" value="45.00" step="0.01" min="0">
+                </div>
+            </div>
+
+            <div class="roi-box">
+                <div class="roi-row">
+                    <span>Затраты на билеты:</span>
+                    <span id="mvm-cost" style="font-weight: 700; color: var(--red);">0.00 $</span>
+                </div>
+                <div class="roi-row">
+                    <span>Шанс выбить Australium:</span>
+                    <span id="mvm-chance" style="font-weight: 700; color: var(--gold);">0%</span>
+                </div>
+                <div class="roi-row" style="border-bottom: none;">
+                    <span>Ожидаемая выплата (EV):</span>
+                    <span id="mvm-ev" style="font-size: 20px; font-weight: 800; color: var(--gold);">0.00 $</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="mvm-verdict" class="roi-badge" style="font-size: 13px; padding: 6px 12px;">—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 6: Strange Parts & Paint Pricer (PRO) -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🎨 Блок 6: Оценщик наценки за краски и счётчики</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Базовая цена чистого предмета (Ref)</label>
+                    <input type="number" id="pr-base" value="15" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Цена краски (Ref)</label>
+                    <select id="pr-paint" style="width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); color: #fff; border-radius: 8px;">
+                        <option value="0">Без краски (0)</option>
+                        <option value="135">A Distinctive Lack of Hue / Чёрная (135)</option>
+                        <option value="115">An Extraordinary Abundance of Tinge / Белая (115)</option>
+                        <option value="45">Australium Gold (45)</option>
+                        <option value="55">Team Spirit (55)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена счётчиков Strange Parts (Ref)</label>
+                    <input type="number" id="pr-parts" value="90" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Процент наценки (%)</label>
+                    <input type="number" id="pr-pct" value="25" step="1" min="0" max="100">
+                </div>
+            </div>
+
+            <div class="roi-box">
+                <div class="roi-row">
+                    <span>Справедливая цена с модификациями:</span>
+                    <span id="pr-fair" style="font-size: 20px; font-weight: 800; color: var(--green);">0.00 Ref</span>
+                </div>
+                <div class="roi-row" style="border-bottom: none;">
+                    <span>Прибыль при покупке как обычный предмет:</span>
+                    <span id="pr-profit" style="font-size: 20px; font-weight: 800; color: var(--gold);">0.00 Ref</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">Преимущества PRO-подписки</h2>
+            <div class="pro-features">
+                <div class="feature-card">
+                    <h4>📊 Все сканеры</h4>
+                    <p>Доступ к PRO-инструментам для CS2, Dota 2 и TF2.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚡ Связки и рецепты</h4>
+                    <p>Готовые арбитражные лоты и рецепты крафта в плюс.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎁 MvM и Unboxing</h4>
+                    <p>Калькуляторы окупаемости туров и открытия ящиков.</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="btn-reset-pro" class="btn" style="width: auto; font-size: 12px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Сбросить PRO (для теста)</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+    </footer>
+
+    <script>
+        // ==========================================
+        // ДАННЫЕ
+        // ==========================================
+        let tf2Data = [
+            { name: 'Mann Co. Supply Crate Key', buy: 1.85, sell: 2.45, liquidity: '500/д' },
+            { name: 'Tour of Duty Ticket', buy: 0.80, sell: 1.10, liquidity: '300/д' },
+            { name: 'Name Tag', buy: 0.50, sell: 0.80, liquidity: '400/д' },
+            { name: 'Description Tag', buy: 0.40, sell: 0.70, liquidity: '400/д' },
+            { name: 'Backpack Expander', buy: 0.60, sell: 0.95, liquidity: '200/д' },
+            { name: 'Taunt: The Schadenfreude', buy: 2.50, sell: 3.80, liquidity: '100/д' }
+        ];
+
+        let arbData = [
+            { name: 'Strange Part: Kills', buy: 10, sell: 15, type: 'Ref' },
+            { name: 'Paint: A Distinctive Lack of Hue', buy: 110, sell: 135, type: 'Ref' },
+            { name: 'Australium Ambassador', buy: 20, sell: 28, type: 'Keys' },
+            { name: 'Taunt: Kazotsky Kick', buy: 5, sell: 8, type: 'Ref' },
+            { name: 'Professional Killstreak Scattergun Kit', buy: 15, sell: 25, type: 'Ref' },
+            { name: 'Mann Co. Supply Crate #82', buy: 2, sell: 4, type: 'Ref' },
+            { name: 'Tour of Duty Ticket', buy: 0.80, sell: 1.10, type: 'USD' },
+            { name: 'Dueling Mini-Game', buy: 1, sell: 2, type: 'Ref' }
+        ];
+
+        // ==========================================
+        // PRO-СИСТЕМА
+        // ==========================================
+        function checkProStatus() {
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+            document.getElementById('tf2-lock').style.display = isPro ? 'none' : 'flex';
+            document.getElementById('arb-lock').style.display = isPro ? 'none' : 'flex';
+            return isPro;
+        }
+
+        window.unlockPro = function() {
+            const key1 = document.getElementById('pro-key-tf2').value.trim();
+            const key2 = document.getElementById('pro-key-arb').value.trim();
+            const enteredKey = key1 || key2;
+
+            if (enteredKey === 'VALVE2026' || enteredKey.startsWith('VH-PRO-')) {
+                localStorage.setItem('valvehub_pro_unlocked', 'true');
+                checkProStatus();
+                renderTF2Table();
+                renderArbTable();
+                alert('✅ PRO-доступ активирован!');
+            } else {
+                alert('❌ Неверный ключ. Используйте VALVE2026');
+            }
+        };
+
+        document.getElementById('btn-reset-pro').addEventListener('click', () => {
+            localStorage.removeItem('valvehub_pro_unlocked');
+            checkProStatus();
+            renderTF2Table();
+            renderArbTable();
+            alert('PRO-доступ сброшен.');
+        });
+
+        // ==========================================
+        // БЛОК 1: ТАБЛИЦА TF2
+        // ==========================================
+        function renderTF2Table() {
+            const tbody = document.getElementById('tf2-tbody');
+            tbody.innerHTML = '';
+            const budget = parseFloat(document.getElementById('tf2-budget').value) || 5000;
+            const currency = document.getElementById('tf2-currency').value;
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+
+            // Курсы (упрощенно)
+            let rate = 1;
+            if (currency === 'RUB') rate = 90;
+            else if (currency === 'BYN') rate = 3.2;
+
+            tf2Data.forEach((d) => {
+                const steamNet = d.sell * 0.8695;
+                const profit = steamNet - d.buy;
+                const roi = (profit / d.buy) * 100;
+                const itemsCount = Math.floor((budget / rate) / d.buy);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${d.name}</td>
+                    <td>${(d.buy * rate).toFixed(2)} ${currency}</td>
+                    <td>${(steamNet * rate).toFixed(2)} ${currency}</td>
+                    <td>${itemsCount} шт.</td>
+                    <td><span class="profit-green">+${roi.toFixed(1)}%</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (!isPro) {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, i) => {
+                    if (i >= 2) row.style.filter = 'blur(5px)';
+                });
+            }
+        }
+
+        document.getElementById('tf2-budget').addEventListener('input', renderTF2Table);
+        document.getElementById('tf2-currency').addEventListener('change', renderTF2Table);
+        document.getElementById('tf2-platform').addEventListener('change', renderTF2Table);
+
+        // ==========================================
+        // БЛОК 2: KILLSTREAK
+        // ==========================================
+        function calcKS() {
+            const parts = parseFloat(document.getElementById('ks-parts').value) || 0;
+            const weapon = parseFloat(document.getElementById('ks-weapon').value) || 0;
+            const sell = parseFloat(document.getElementById('ks-sell').value) || 0;
+
+            const cost = parts + weapon;
+            const revenue = sell * 0.8695;
+            const profit = revenue - cost;
+            const roi = cost > 0 ? (profit / cost) * 100 : 0;
+
+            document.getElementById('ks-cost').textContent = cost.toFixed(2) + ' Ref';
+            document.getElementById('ks-revenue').textContent = revenue.toFixed(2) + ' Ref';
+            document.getElementById('ks-profit').textContent = (profit > 0 ? '+' : '') + profit.toFixed(2) + ' Ref';
+            
+            const verdict = document.getElementById('ks-verdict');
+            if (profit > 0) {
+                verdict.textContent = '✅ Выгодно собирать!';
+                verdict.style.background = 'rgba(16, 185, 129, 0.2)';
+                verdict.style.color = 'var(--green)';
+            } else {
+                verdict.textContent = '❌ Выгоднее продать запчасти';
+                verdict.style.background = 'rgba(239, 68, 68, 0.2)';
+                verdict.style.color = 'var(--red)';
+            }
+        }
+
+        ['ks-parts', 'ks-weapon', 'ks-sell'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcKS);
+        });
+
+        // ==========================================
+        // БЛОК 3: АРБИТРАЖ
+        // ==========================================
+        function renderArbTable() {
+            const tbody = document.getElementById('arb-tbody');
+            tbody.innerHTML = '';
+            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
+
+            arbData.forEach((d) => {
+                const profit = d.sell - d.buy;
+                const roi = (profit / d.buy) * 100;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${d.name}</td>
+                    <td>${d.buy} ${d.type}</td>
+                    <td>${d.sell} ${d.type}</td>
+                    <td><span class="profit-green">+${profit.toFixed(2)} ${d.type}</span><br><span class="roi-badge">+${roi.toFixed(1)}%</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (!isPro) {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, i) => {
+                    if (i >= 2) row.style.filter = 'blur(5px)';
+                });
+            }
+        }
+
+        document.getElementById('btn-add-arb').addEventListener('click', () => {
+            const name = prompt('Название предмета:');
+            if (!name) return;
+            const buy = parseFloat(prompt('Цена покупки:'));
+            const sell = parseFloat(prompt('Цена продажи:'));
+            const type = prompt('Тип валюты (Ref, Keys, USD):') || 'Ref';
+            
+            if (!isNaN(buy) && !isNaN(sell)) {
+                arbData.push({ name, buy, sell, type });
+                renderArbTable();
+            }
+        });
+
+        // ==========================================
+        // БЛОК 4: UNBOXING ROI
+        // ==========================================
+        function calcUnbox() {
+            const count = parseInt(document.getElementById('ub-count').value) || 20;
+            const keyPrice = parseFloat(document.getElementById('ub-key-price').value) || 2.50;
+            const cratePrice = parseFloat(document.getElementById('ub-crate-price').value) || 0.10;
+            const common = parseFloat(document.getElementById('ub-common').value) || 1.50;
+            const rare = parseFloat(document.getElementById('ub-rare').value) || 15.00;
+            const unusual = parseFloat(document.getElementById('ub-unusual').value) || 150.00;
+
+            const totalCost = (keyPrice + cratePrice) * count;
+            
+            // Шансы (примерные для TF2)
+            const pUnusual = 0.0066; // 0.66%
+            const pRare = 0.10;      // 10%
+            
+            const chanceUnusual = (1 - Math.pow(1 - pUnusual, count)) * 100;
+            
+            // EV
+            const evPerBox = (pUnusual * unusual) + (pRare * rare) + ((1 - pUnusual - pRare) * common);
+            const totalEV = evPerBox * count;
+
+            document.getElementById('ub-cost').textContent = totalCost.toFixed(2) + ' $';
+            document.getElementById('ub-chance').textContent = chanceUnusual.toFixed(1) + '%';
+            document.getElementById('ub-ev').textContent = totalEV.toFixed(2) + ' $';
+
+            const verdict = document.getElementById('ub-verdict');
+            if (totalEV > totalCost) {
+                verdict.textContent = '✅ Выгодно (EV > Затрат)';
+                verdict.style.background = 'rgba(16, 185, 129, 0.2)';
+                verdict.style.color = 'var(--green)';
+            } else {
+                verdict.textContent = '❌ Убыточно (EV < Затрат)';
+                verdict.style.background = 'rgba(239, 68, 68, 0.2)';
+                verdict.style.color = 'var(--red)';
+            }
+        }
+
+        ['ub-count', 'ub-key-price', 'ub-crate-price', 'ub-common', 'ub-rare', 'ub-unusual'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcUnbox);
+        });
+
+        // ==========================================
+        // БЛОК 5: MvM ROI
+        // ==========================================
+        function calcMvM() {
+            const tours = parseInt(document.getElementById('mvm-tours').value) || 10;
+            const ticketPrice = parseFloat(document.getElementById('mvm-ticket').value) || 0.95;
+            const avgReturn = parseFloat(document.getElementById('mvm-return').value) || 1.60;
+            const australiumPrice = parseFloat(document.getElementById('mvm-australium').value) || 45.00;
+
+            const totalCost = tours * 4 * ticketPrice; // 4 билета на тур
+            const guaranteedReturn = tours * avgReturn;
+            
+            const pAustralium = 0.021; // 2.1%
+            const chanceAustralium = (1 - Math.pow(1 - pAustralium, tours)) * 100;
+            
+            // EV = гарантированный возврат + шанс на австралиум
+            const evAustralium = tours * pAustralium * australiumPrice;
+            const totalEV = guaranteedReturn + evAustralium;
+
+            document.getElementById('mvm-cost').textContent = totalCost.toFixed(2) + ' $';
+            document.getElementById('mvm-chance').textContent = chanceAustralium.toFixed(1) + '%';
+            document.getElementById('mvm-ev').textContent = totalEV.toFixed(2) + ' $';
+
+            const verdict = document.getElementById('mvm-verdict');
+            if (totalEV > totalCost) {
+                verdict.textContent = '✅ Окупается (EV > Затрат)';
+                verdict.style.background = 'rgba(16, 185, 129, 0.2)';
+                verdict.style.color = 'var(--green)';
+            } else {
+                verdict.textContent = '❌ Не окупается (EV < Затрат)';
+                verdict.style.background = 'rgba(239, 68, 68, 0.2)';
+                verdict.style.color = 'var(--red)';
+            }
+        }
+
+        ['mvm-tours', 'mvm-ticket', 'mvm-return', 'mvm-australium'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcMvM);
+        });
+
+        // ==========================================
+        // БЛОК 6: PRICER
+        // ==========================================
+        function calcPricer() {
+            const base = parseFloat(document.getElementById('pr-base').value) || 0;
+            const paint = parseFloat(document.getElementById('pr-paint').value) || 0;
+            const parts = parseFloat(document.getElementById('pr-parts').value) || 0;
+            const pct = parseFloat(document.getElementById('pr-pct').value) || 25;
+
+            const fairPrice = base + (paint + parts) * (pct / 100);
+            const profit = fairPrice - base;
+
+            document.getElementById('pr-fair').textContent = fairPrice.toFixed(2) + ' Ref';
+            document.getElementById('pr-profit').textContent = '+' + profit.toFixed(2) + ' Ref';
+        }
+
+        ['pr-base', 'pr-paint', 'pr-parts', 'pr-pct'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcPricer);
+        });
+
+        // ==========================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ==========================================
+        window.onload = function() {
+            checkProStatus();
+            renderTF2Table();
+            renderArbTable();
+            calcKS();
+            calcUnbox();
+            calcMvM();
+            calcPricer();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>

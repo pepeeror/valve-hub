@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Trade-Up Калькулятор Контрактов | VALVE HUB</title>
+    <meta name="description" content="Профессиональный калькулятор контрактов обмена CS2. Рассчитайте средний Float, итоговое качество скина и математическое ожидание прибыли.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Дополнительные стили для специфических элементов CS2 */
+        .cs2-grid {
+            display: grid;
+            grid-template-columns: 30px 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .cs2-grid-header {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .preset-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .badge-fn { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-mw { background: rgba(163, 230, 53, 0.2); color: #a3e635; border: 1px solid rgba(163, 230, 53, 0.3); }
+        .badge-ft { background: rgba(245, 158, 11, 0.2); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-ww { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .badge-bs { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+        
+        .outcome-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 40px;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .remove-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            height: 44px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .remove-btn:hover {
+            background: var(--red);
+            color: #fff;
+        }
+        .error-text {
+            color: var(--red);
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 5px;
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .cs2-grid { grid-template-columns: 25px 1fr 1fr; }
+            .outcome-row { grid-template-columns: 1fr 80px 80px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Шапка (меню подставит nav.js) -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">VALVE<span>HUB</span></a>
+            <ul class="nav-links"></ul>
+        </div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;">Калькулятор контрактов CS2</h1>
+            <p style="color: var(--text-muted);">Расчёт точного Float и окупаемости (EV) для Trade-Up контрактов.</p>
+        </div>
+
+        <!-- БЛОК 1: Float и износ -->
+        <section class="calculator-section">
+            <h2 class="calc-title">🔫 Блок 1: Входные скины и итоговый Float</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <button id="btn-fill" class="btn btn-small">Заполнить все 10 слотов из 1-го</button>
+                <button id="btn-reset" class="btn btn-small" style="background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Сбросить всё</button>
+            </div>
+
+            <div class="cs2-grid cs2-grid-header">
+                <div>#</div>
+                <div>Float скина (0.00 - 1.00)</div>
+                <div>Цена ($)</div>
+            </div>
+
+            <div id="slots-container">
+                <!-- Слоты будут сгенерированы через JS -->
+            </div>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);">
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>Параметры итогового скина (Outcome)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" id="outcome-min" value="0.00" step="0.01" min="0" max="1" style="width: 80px;">
+                        <span>—</span>
+                        <input type="number" id="outcome-max" value="1.00" step="0.01" min="0" max="1" style="width: 80px;">
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 2; min-width: 300px;">
+                    <label>Быстрые пресеты</label>
+                    <div>
+                        <button class="btn btn-small preset-btn" data-min="0.00" data-max="1.00">0.00 - 1.00 (Стандарт)</button>
+                        <button class="btn btn-small preset-btn" data-min="0.00" data-max="0.80">0.00 - 0.80 (ASIimov)</button>
+                        <button class="btn btn-small preset-btn" data-min="0.06" data-max="0.80">0.06 - 0.80 (CW / Night)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Общая стоимость 10 скинов:</span>
+                    <span id="total-cost" class="text-gold">0.00 $</span>
+                </div>
+                <div class="result-row">
+                    <span>Средний Float (Avg Input):</span>
+                    <span id="avg-float">0.000000</span>
+                </div>
+                <div class="result-row" style="border-bottom: none;">
+                    <span>Итоговый Float (Output):</span>
+                    <span id="output-float" style="font-size: 20px; font-weight: 800; color: var(--accent);">0.000000</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="quality-badge" class="badge badge-common" style="font-size: 14px; padding: 8px 16px;">—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: Конструктор исходов и EV -->
+        <section class="calculator-section">
+            <h2 class="calc-title">📊 Блок 2: Шансы и окупаемость (EV)</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Добавьте возможные исходы, чтобы рассчитать математическое ожидание (EV).</p>
+
+            <div class="outcome-row" style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 5px;">
+                <div>Название скина</div>
+                <div>Шанс (%)</div>
+                <div>Цена ($)</div>
+                <div></div>
+            </div>
+
+            <div id="outcomes-container">
+                <!-- Исходы будут добавляться через JS -->
+            </div>
+
+            <button id="btn-add-outcome" class="btn" style="margin-top: 10px; width: auto;">+ Добавить исход</button>
+            <div id="chance-error" class="error-text">Внимание: Сумма шансов не равна 100%!</div>
+
+            <div class="results-box">
+                <div class="result-row">
+                    <span>Ожидаемая выплата (EV):</span>
+                    <span id="ev-result" class="text-gold">0.00 $</span>
+                </div>
+                <div class="result-row">
+                    <span>Чистый профит (EV - Себестоимость):</span>
+                    <span id="net-profit">0.00 $</span>
+                </div>
+                <div class="result-row" style="font-size: 22px;">
+                    <span>ROI (Окупаемость):</span>
+                    <span id="roi-result">0.0%</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">FAQ по Trade-Up контрактам</h2>
+            <div class="faq-item">
+                <h3>Как работает формула Float в CS2?</h3>
+                <p>Итоговый Float рассчитывается по формуле: <code>Output = (Avg Input * (MaxFloat - MinFloat)) + MinFloat</code>. Средний входной Float берется от 10 ваших скинов, а Min и Max — это границы износа конкретного итогового скина (например, у Asiimov это 0.00 - 0.80).</p>
+            </div>
+            <div class="faq-item">
+                <h3>Что такое EV (Математическое ожидание)?</h3>
+                <p>EV — это средний доход, который вы получите с каждой такой сделки на дистанции. Если EV больше стоимости крафта (10 скинов), контракт выгоден математически.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VALVE HUB. Инструменты для трейдеров и игроков.</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            // --- ГЕНЕРАЦИЯ 10 СЛОТОВ ---
+            const slotsContainer = document.getElementById('slots-container');
+            for (let i = 1; i <= 10; i++) {
+                const div = document.createElement('div');
+                div.className = 'cs2-grid';
+                div.innerHTML = `
+                    <div style="color: var(--text-muted); font-weight: 600;">${i}</div>
+                    <input type="number" class="input-float" value="0.015" step="0.0001" min="0" max="1">
+                    <input type="number" class="input-price" value="0.00" step="0.01" min="0">
+                `;
+                slotsContainer.appendChild(div);
+            }
+
+            const floatInputs = document.querySelectorAll('.input-float');
+            const priceInputs = document.querySelectorAll('.input-price');
+            const outcomeMin = document.getElementById('outcome-min');
+            const outcomeMax = document.getElementById('outcome-max');
+
+            // --- ЛОГИКА РАСЧЕТА FLOAT ---
+            function calcFloat() {
+                let sumFloat = 0;
+                let sumPrice = 0;
+                
+                for (let i = 0; i < 10; i++) {
+                    let f = parseFloat(floatInputs[i].value);
+                    let p = parseFloat(priceInputs[i].value);
+                    sumFloat += isNaN(f) ? 0 : Math.max(0, Math.min(1, f));
+                    sumPrice += isNaN(p) ? 0 : Math.max(0, p);
+                }
+
+                const avgInput = sumFloat / 10;
+                const minF = parseFloat(outcomeMin.value) || 0;
+                const maxF = parseFloat(outcomeMax.value) || 1;
+
+                const outputFloat = (avgInput * (maxF - minF)) + minF;
+
+                document.getElementById('total-cost').textContent = sumPrice.toFixed(2) + ' $';
+                document.getElementById('avg-float').textContent = avgInput.toFixed(6);
+                document.getElementById('output-float').textContent = outputFloat.toFixed(6);
+
+                const badge = document.getElementById('quality-badge');
+                let qualityText = '';
+                let qualityClass = '';
+
+                if (outputFloat < 0.07) {
+                    qualityText = 'Прямо с завода (FN)';
+                    qualityClass = 'badge-fn';
+                } else if (outputFloat < 0.15) {
+                    qualityText = 'Немного поношенное (MW)';
+                    qualityClass = 'badge-mw';
+                } else if (outputFloat < 0.38) {
+                    qualityText = 'После полевых (FT)';
+                    qualityClass = 'badge-ft';
+                } else if (outputFloat < 0.45) {
+                    qualityText = 'Поношенное (WW)';
+                    qualityClass = 'badge-ww';
+                } else {
+                    qualityText = 'Закалённое в боях (BS)';
+                    qualityClass = 'badge-bs';
+                }
+
+                badge.textContent = qualityText;
+                badge.className = 'badge ' + qualityClass;
+                
+                calcEV(sumPrice);
+            }
+
+            floatInputs.forEach(el => el.addEventListener('input', calcFloat));
+            priceInputs.forEach(el => el.addEventListener('input', calcFloat));
+            outcomeMin.addEventListener('input', calcFloat);
+            outcomeMax.addEventListener('input', calcFloat);
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    outcomeMin.value = parseFloat(btn.dataset.min).toFixed(2);
+                    outcomeMax.value = parseFloat(btn.dataset.max).toFixed(2);
+                    calcFloat();
+                });
+            });
+
+            document.getElementById('btn-fill').addEventListener('click', () => {
+                const firstFloat = floatInputs[0].value;
+                const firstPrice = priceInputs[0].value;
+                floatInputs.forEach(el => el.value = firstFloat);
+                priceInputs.forEach(el => el.value = firstPrice);
+                calcFloat();
+            });
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                floatInputs.forEach(el => el.value = '0.015');
+                priceInputs.forEach(el => el.value = '0.00');
+                outcomeMin.value = '0.00';
+                outcomeMax.value = '1.00';
+                calcFloat();
+            });
+
+
+            // --- БЛОК 2: КОНСТРУКТОР EV ---
+            const outcomesContainer = document.getElementById('outcomes-container');
+            let outcomeCount = 0;
+
+            function addOutcomeRow(name = '', chance = '', price = '') {
+                if (outcomeCount >= 6) return;
+                outcomeCount++;
+
+                const div = document.createElement('div');
+                div.className = 'outcome-row';
+                div.innerHTML = `
+                    <input type="text" class="out-name" placeholder="Название скина" value="${name}">
+                    <input type="number" class="out-chance" placeholder="Шанс %" value="${chance}" step="0.1" min="0" max="100">
+                    <input type="number" class="out-price" placeholder="Цена $" value="${price}" step="0.01" min="0">
+                    <button class="remove-btn" title="Удалить">✕</button>
+                `;
+                
+                div.querySelector('.out-chance').addEventListener('input', () => calcEV());
+                div.querySelector('.out-price').addEventListener('input', () => calcEV());
+                div.querySelector('.remove-btn').addEventListener('click', () => {
+                    div.remove();
+                    outcomeCount--;
+                    calcEV();
+                });
+
+                outcomesContainer.appendChild(div);
+                calcEV();
+            }
+
+            function calcEV(currentCost = null) {
+                let cost = currentCost;
+                if (cost === null) {
+                    cost = 0;
+                    priceInputs.forEach(el => {
+                        let p = parseFloat(el.value);
+                        cost += isNaN(p) ? 0 : Math.max(0, p);
+                    });
+                }
+
+                let totalChance = 0;
+                let ev = 0;
+                
+                const rows = outcomesContainer.querySelectorAll('.outcome-row');
+                rows.forEach(row => {
+                    const chance = parseFloat(row.querySelector('.out-chance').value) || 0;
+                    const price = parseFloat(row.querySelector('.out-price').value) || 0;
+                    
+                    totalChance += chance;
+                    ev += price * (chance / 100);
+                });
+
+                const errEl = document.getElementById('chance-error');
+                if (rows.length > 0 && Math.abs(totalChance - 100) > 0.1) {
+                    errEl.style.display = 'block';
+                    errEl.textContent = `Внимание: Сумма шансов ${totalChance.toFixed(1)}% (должна быть 100%)`;
+                } else {
+                    errEl.style.display = 'none';
+                }
+
+                const netProfit = ev - cost;
+                const roi = cost > 0 ? (netProfit / cost) * 100 : 0;
+
+                document.getElementById('ev-result').textContent = ev.toFixed(2) + ' $';
+                
+                const profitEl = document.getElementById('net-profit');
+                profitEl.textContent = (netProfit > 0 ? '+' : '') + netProfit.toFixed(2) + ' $';
+                profitEl.className = netProfit > 0 ? 'text-green' : 'text-red';
+
+                const roiEl = document.getElementById('roi-result');
+                roiEl.textContent = (roi > 0 ? '+' : '') + roi.toFixed(1) + '%';
+                roiEl.className = roi > 0 ? 'text-green' : 'text-red';
+            }
+
+            addOutcomeRow('AK-47 | Redline (FT)', '33.3', '15.50');
+            addOutcomeRow('AWP | Asiimov (FT)', '33.3', '45.00');
+            addOutcomeRow('M4A4 | Desolate Space', '33.4', '12.00');
+
+            document.getElementById('btn-add-outcome').addEventListener('click', () => {
+                addOutcomeRow();
+            });
+
+            calcFloat();
+        };
+    </script>
+    
+    <script src="nav.js"></script>
+</body>
+</html>
