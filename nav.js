@@ -1,56 +1,78 @@
+const VH_API = "https://workers.dev";
+
+window.VH = {
+  api: VH_API,
+  prices: null,
+
+  // Загрузка живых цен с сервера (с кэшем на 5 минут в браузере)
+  async getPrices() {
+    if (this.prices) return this.prices;
+    try {
+      const cached = sessionStorage.getItem("vh_prices");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.ts < 5 * 60 * 1000) {
+          this.prices = parsed.data;
+          return this.prices;
+        }
+      }
+      const res = await fetch(`${VH_API}/api/prices`);
+      const data = await res.json();
+      if (data && data.prices) {
+        this.prices = data;
+        sessionStorage.setItem("vh_prices", JSON.stringify({ ts: Date.now(), data }));
+        return data;
+      }
+    } catch (e) {
+      console.warn("VALVEHUB API offline, using fallback:", e);
+    }
+    return null;
+  },
+
+  // Проверка статуса PRO-доступа
+  isPro() {
+    return localStorage.getItem("vh_pro_active") === "1";
+  },
+
+  // Серверная активация одноразового PRO-ключа
+  async activateKey(rawKey) {
+    const key = (rawKey || "").trim().toUpperCase();
+    if (!key) return { valid: false, error: "Введите ключ доступа" };
+    try {
+      const res = await fetch(`${VH_API}/api/verify-key`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key })
+      });
+      const data = await res.json();
+      if (data.valid) {
+        localStorage.setItem("vh_pro_active", "1");
+        localStorage.setItem("vh_pro_key", key);
+      }
+      return data;
+    } catch (e) {
+      return { valid: false, error: "Нет связи с сервером проверки" };
+    }
+  },
+
+  // Трекинг посещаемости страницы
+  trackPage() {
+    const page = location.pathname.split("/").pop() || "index.html";
+    fetch(`${VH_API}/api/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page })
+    }).catch(() => {});
+  }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Обновление навигации
-    const header = document.querySelector("header");
-    if (header) {
-        let navLinks = header.querySelector(".nav-links");
-        if (!navLinks) {
-            const navContainer = header.querySelector(".nav-container");
-            if (navContainer) {
-                navLinks = document.createElement("ul");
-                navLinks.className = "nav-links";
-                navContainer.appendChild(navLinks);
-            }
-        }
+  window.VH.trackPage();
 
-        if (navLinks) {
-            // Полный список страниц портала
-            const pages = [
-                { name: "Главная", url: "index.html" },
-                { name: "Пополнение Steam", url: "steam-topup.html" },
-                { name: "Конвертер TF2", url: "tf2-converter.html" },
-                { name: "Крафт TF2", url: "tf2-craft.html" },
-                { name: "Конфиги TF2", url: "tf2-config.html" },
-                { name: "Контракты CS2", url: "cs2-tradeup.html" },
-                { name: "Конфиги CS2", url: "cs2-config.html" },
-                { name: "Оценка инвентаря", url: "inventory-value.html" },
-                { name: "Dota 2 ММР", url: "dota2-tools.html" },
-                { name: "Dota 2 Тайминги", url: "dota2-timings.html" },
-                { name: "Dota 2 EHP", url: "dota2-ehp.html" },
-                { name: "Dota 2 PRO", url: "dota2-pro-scanner.html" },
-                { name: "CS2 Sens", url: "cs2-sens.html" },
-                { name: "PRO Сканер CS2", url: "cs2-pro-scanner.html" },
-                { name: "PRO Сканер TF2", url: "tf2-pro-scanner.html" }
-            ];
-
-            let currentPath = window.location.pathname;
-            let currentPage = currentPath.substring(currentPath.lastIndexOf("/") + 1);
-            if (currentPage === "" || currentPage === "/") {
-                currentPage = "index.html";
-            }
-
-            let html = "";
-            pages.forEach(page => {
-                const isActive = (currentPage === page.url) ? "active" : "";
-                html += `<li><a href="${page.url}" class="${isActive}">${page.name}</a></li>`;
-            });
-            
-            navLinks.innerHTML = html;
-        }
-    }
-
-    // 2. Обновление года в подвале
-    const footer = document.querySelector("footer p");
-    if (footer) {
-        footer.innerHTML = footer.innerHTML.replace(/©\s*\d{4}/g, "© 2026");
-    }
+  // Автоматическое обновление бейджей PRO в шапке
+  const proBadge = document.getElementById("nav-pro-status");
+  if (proBadge && window.VH.isPro()) {
+    proBadge.textContent = "PRO АКТИВЕН";
+    proBadge.style.color = "#4ade80";
+  }
 });
