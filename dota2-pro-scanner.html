@@ -3,11 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO Сканер Dota 2 (Арканы и Сокровищницы) | VALVE HUB</title>
-    <meta name="description" content="PRO-инструмент для трейдеров Dota 2: выгодное пополнение Steam через Арканы и Immortal-предметы, калькулятор окупаемости открытия сокровищниц.">
+    <title>PRO Сканер Dota 2 (Живые цены Steam) | VALVE HUB</title>
+    <meta name="description" content="Живой сканер Аркан Dota 2 с реальными ценами Steam, профиль игрока, мета патча, контрпик-ассистент и генератор конфига.">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 20px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
+        .tab-btn:hover { border-color: var(--accent); }
+        .tab-btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--accent); color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* PRO blur */
+        .pro-blur { filter: blur(5px); pointer-events: none; user-select: none; }
+        .pro-overlay { position: relative; }
+        .pro-overlay::after { content: '🔒 PRO'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); padding: 10px 20px; border-radius: 8px; border: 1px solid var(--gold); color: var(--gold); font-weight: 800; z-index: 10; display: none; }
+        .pro-overlay.locked::after { display: block; }
+
+        .spinner { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
+        .hero-card { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .hero-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .hero-card.selected { border-color: var(--green); background: rgba(16, 185, 129, 0.1); }
+        .hero-card img { width: 48px; height: 48px; border-radius: 50%; margin-bottom: 4px; }
+        .hero-card .name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .draft-slots { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .draft-slot { width: 60px; height: 60px; border-radius: 50%; background: var(--bg-input); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); }
+        .draft-slot.filled { border-style: solid; border-color: var(--accent); overflow: hidden; }
+        .draft-slot img { width: 100%; height: 100%; object-fit: cover; }
+
+        .code-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 13px; color: #c9d1d9; white-space: pre-wrap; max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
+        
+        .checkbox-item { display: flex; align-items: flex-start; gap: 10px; background: var(--bg-input); padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
+        .checkbox-item input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+        
+        .badge-green { background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge-gold { background: rgba(245, 158, 11, 0.2); color: var(--gold); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        
         .pro-lock-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 18, 24, 0.7);
@@ -22,30 +59,10 @@
         }
         .pro-lock-content h3 { color: var(--gold); margin-bottom: 10px; font-size: 18px; }
         .pro-lock-content p { color: var(--text-muted); font-size: 13px; margin-bottom: 15px; }
-        .table-container { position: relative; overflow: hidden; min-height: 200px; }
-        .pro-table { width: 100%; border-collapse: collapse; }
-        .pro-table th {
-            text-align: left; font-size: 12px; color: var(--text-muted);
-            padding: 10px; border-bottom: 1px solid var(--border); background: var(--bg-input);
-        }
-        .pro-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-main); }
-        .pro-table tr:hover { background: rgba(255,255,255,0.02); }
-        .profit-green { color: var(--green); font-weight: 800; }
-        .roi-badge { background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
-        
-        .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-        .chip { padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s; }
-        .chip:hover { border-color: var(--accent); }
-        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        
-        .roi-box {
-            background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-top: 15px;
-        }
-        .roi-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; border-bottom: 1px dashed var(--border); }
-        .roi-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
+
     <header>
         <div class="nav-container">
             <a href="index.html" class="logo">VALVE<span>HUB</span> <span style="font-size: 10px; background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle;">PRO</span></a>
@@ -55,313 +72,375 @@
 
     <main>
         <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 28px; margin-bottom: 10px;">PRO Сканер Dota 2 <span style="font-size: 14px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 6px; vertical-align: middle;">PREMIUM</span></h1>
-            <p style="color: var(--text-muted);">Эксклюзивные связки Аркан и калькулятор сокровищниц.</p>
+            <h1 style="font-size: 28px; margin-bottom: 10px;">PRO Сканер Dota 2 <span style="font-size: 14px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 6px; vertical-align: middle;">LIVE</span></h1>
+            <p style="color: var(--text-muted);">Живые цены Steam, профили игроков, мета патча и контрпики.</p>
         </div>
 
-        <!-- PRO-БЛОК 1: Сканер пополнения -->
-        <section class="calculator-section">
-            <h2 class="calc-title">📈 Блок 1: Сканер пополнения Steam (Арканы и Immortal)</h2>
-            
-            <div class="filter-chips" id="dota-filters">
-                <div class="chip active" data-cat="all">Все предметы</div>
-                <div class="chip" data-cat="arcana">Arcana</div>
-                <div class="chip" data-cat="immortal">Immortal</div>
-                <div class="chip" data-cat="treasure">Сокровищницы</div>
-            </div>
+        <!-- Табы -->
+        <div class="tabs" id="main-tabs">
+            <div class="tab-btn active" data-tab="arcanas">📈 Арканы</div>
+            <div class="tab-btn" data-tab="player">👤 Профиль</div>
+            <div class="tab-btn" data-tab="meta">📊 Мета</div>
+            <div class="tab-btn" data-tab="draft">🎯 Драфт</div>
+            <div class="tab-btn" data-tab="config">⚙️ Конфиг</div>
+        </div>
 
-            <div class="form-row" style="margin-bottom: 20px;">
-                <div class="form-group">
-                    <label>Ваш бюджет ($)</label>
-                    <input type="number" id="dota-budget" value="100" min="1" step="1">
+        <!-- Модуль 1: Арканы -->
+        <div id="tab-arcanas" class="tab-content active">
+            <section class="calculator-section">
+                <h2 class="calc-title">📈 Живой сканер Аркан</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="arcana-search" placeholder="Поиск по названию..." style="flex: 1; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
+                    <select id="arcana-sort" style="padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
+                        <option value="roi">По ROI</option>
+                        <option value="profit">По профиту</option>
+                        <option value="price">По цене</option>
+                    </select>
                 </div>
-                <div class="form-group" style="display: flex; align-items: flex-end;">
-                    <button id="btn-recalc-dota" class="btn" style="width: 100%;">Пересчитать</button>
-                </div>
-            </div>
-
-            <div class="table-container" id="dota-table-container">
-                <table class="pro-table">
-                    <thead>
-                        <tr>
-                            <th>Предмет и герой</th>
-                            <th>Маркет ($)</th>
-                            <th>Steam (чистыми)</th>
-                            <th>Ликвид.</th>
-                            <th>Профит / ROI</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dota-tbody"></tbody>
-                </table>
-                <div id="dota-lock" class="pro-lock-overlay" style="display: none;">
-                    <div class="pro-lock-content">
-                        <h3>🔒 Доступно в PRO-подписке</h3>
-                        <p>Получите доступ к связкам Аркан и предметов Dota 2.</p>
-                        <input type="text" id="pro-key-dota" placeholder="Введите ключ (VALVE2026)" style="width: 100%; margin-bottom: 10px; text-align: center;">
-                        <button class="btn" onclick="unlockPro()">Получить PRO-доступ</button>
+                <div id="arcana-status" style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;"></div>
+                <div id="arcana-list"></div>
+                <div style="margin-top: 15px; padding: 15px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+                    <h4 style="color: var(--red); margin-bottom: 10px;">5 недоступных эксклюзивов (Не передаются)</h4>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 13px; color: var(--text-muted);">
+                        <span>Io (Benevolent Companion)</span>
+                        <span>Spectre (Phantom Advent)</span>
+                        <span>Faceless Void (Claszian Apostasy)</span>
+                        <span>Razor (Voidstorm Asylum)</span>
+                        <span>Earthshaker (Planetfall BP)</span>
                     </div>
                 </div>
-            </div>
+            </section>
+        </div>
 
-            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button id="btn-add-dota" class="btn" style="width: auto;">+ Добавить связку</button>
-            </div>
-        </section>
+        <!-- Модуль 2: Профиль игрока -->
+        <div id="tab-player" class="tab-content">
+            <section class="calculator-section">
+                <h2 class="calc-title">👤 Профиль игрока</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="player-id" placeholder="Account ID (например, 123456789)" style="flex: 1; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
+                    <button id="btn-load-player" class="btn" style="width: auto;">Загрузить</button>
+                </div>
+                <div id="player-result"></div>
+            </section>
+        </div>
 
-        <!-- PRO-БЛОК 2: Калькулятор сокровищниц -->
-        <section class="calculator-section">
-            <h2 class="calc-title">🎁 Блок 2: Калькулятор окупаемости сокровищниц (Treasure ROI)</h2>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Цена 1 сокровищницы ($)</label>
-                    <input type="number" id="t-price" value="2.50" step="0.01" min="0.01">
+        <!-- Модуль 3: Мета -->
+        <div id="tab-meta" class="tab-content">
+            <section class="calculator-section">
+                <h2 class="calc-title">📊 Радар Меты Патча</h2>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">Загрузка реальной базы героев в разработке. Скоро здесь появится полный анализ пабов и про-сцены.</p>
+                <div id="meta-list" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <div class="spinner"></div>
+                    <p>Загрузка данных...</p>
                 </div>
-                <div class="form-group">
-                    <label>Количество сундуков</label>
-                    <input type="number" id="t-count" value="15" step="1" min="1">
-                </div>
-            </div>
+            </section>
+        </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Средняя цена обычного сета ($)</label>
-                    <input type="number" id="t-common" value="0.50" step="0.01" min="0">
+        <!-- Модуль 4: Драфт -->
+        <div id="tab-draft" class="tab-content">
+            <section class="calculator-section">
+                <h2 class="calc-title">🎯 Контрпик-Ассистент</h2>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Выберите до 5 героев врага (бесплатно — до 2).</p>
+                <div class="draft-slots" id="draft-slots">
+                    <div class="draft-slot" data-slot="0">+</div>
+                    <div class="draft-slot" data-slot="1">+</div>
+                    <div class="draft-slot" data-slot="2">+</div>
+                    <div class="draft-slot" data-slot="3">+</div>
+                    <div class="draft-slot" data-slot="4">+</div>
                 </div>
-                <div class="form-group">
-                    <label>Цена Rare сета ($)</label>
-                    <input type="number" id="t-rare" value="8.00" step="0.01" min="0">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Цена Very Rare ($)</label>
-                    <input type="number" id="t-very-rare" value="25.00" step="0.01" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Цена Ultra Rare ($)</label>
-                    <input type="number" id="t-ultra-rare" value="120.00" step="0.01" min="0">
-                </div>
-            </div>
+                <input type="text" id="hero-search" placeholder="Поиск героя..." style="width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff; margin-bottom: 10px;">
+                <div id="hero-list" class="hero-grid"></div>
+                <div id="draft-result" style="margin-top: 20px;"></div>
+            </section>
+        </div>
 
-            <div class="roi-box" id="treasure-result-box">
-                <div class="roi-row">
-                    <span>Затраты на сундуки:</span>
-                    <span id="t-cost" style="font-weight: 800; color: var(--red);">0.00 $</span>
+        <!-- Модуль 5: Конфиг -->
+        <div id="tab-config" class="tab-content">
+            <section class="calculator-section">
+                <h2 class="calc-title">⚙️ Генератор autoexec.cfg</h2>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-fps" checked>
+                    <label for="cfg-fps">Максимальный FPS и отключение эффектов</label>
                 </div>
-                <div class="roi-row">
-                    <span>Шанс выбить Rare (хотя бы 1):</span>
-                    <span id="t-chance-rare" style="color: var(--gold); font-weight: 600;">0%</span>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-shake" checked>
+                    <label for="cfg-shake">Отключение тряски экрана</label>
                 </div>
-                <div class="roi-row">
-                    <span>Шанс выбить Very Rare:</span>
-                    <span id="t-chance-vrare" style="color: #a3e635; font-weight: 600;">0%</span>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-quickcast" checked>
+                    <label for="cfg-quickcast">Быстрый каст и двойное нажатие</label>
                 </div>
-                <div class="roi-row">
-                    <span>Шанс выбить Ultra Rare:</span>
-                    <span id="t-chance-ultra" style="color: var(--accent); font-weight: 600;">0%</span>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-runes" checked>
+                    <label for="cfg-runes">Бинд проверки рун (F1/F2)</label>
                 </div>
-                <div class="roi-row" style="margin-top: 10px; border-bottom: none;">
-                    <span>Ожидаемая выплата (EV):</span>
-                    <span id="t-ev" style="font-size: 18px; font-weight: 800; color: var(--gold);">0.00 $</span>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cfg-range" checked>
+                    <label for="cfg-range">Показ радиуса способностей</label>
                 </div>
-                <div style="text-align: center; margin-top: 10px;">
-                    <span id="t-verdict" class="roi-badge" style="font-size: 13px; padding: 6px 12px;">—</span>
+                <div class="code-box" id="cfg-output">// Конфиг</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="btn-copy-cfg" class="btn" style="flex: 1;">📋 Скопировать</button>
+                    <button id="btn-download-cfg" class="btn" style="flex: 1;">💾 Скачать autoexec.cfg</button>
                 </div>
-            </div>
-        </section>
-
-        <section class="faq-section">
-            <h2 style="font-size: 22px; margin-bottom: 20px; color: #fff;">Преимущества PRO-подписки</h2>
-            <div class="feature-card" style="margin-bottom: 10px;">
-                <h4>📊 Связки Аркан</h4>
-                <p>Готовые предметы с маркетов, которые при перепродаже в Steam дают +15-25% к балансу.</p>
-            </div>
-            <div class="feature-card" style="margin-bottom: 10px;">
-                <h4>🎁 Оценка сокровищниц</h4>
-                <p>Математический расчет шансов и EV, чтобы не открывать сундуки в минус.</p>
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button id="btn-reset-pro" class="btn" style="width: auto; font-size: 12px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Сбросить PRO (для теста)</button>
-            </div>
-        </section>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Положите файл в .../Steam/steamapps/common/dota 2 beta/game/dota/cfg/</p>
+            </section>
+        </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров CS2, Dota 2 и TF2</p>
+        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров</p>
     </footer>
 
     <script>
         // ==========================================
-        // ДАННЫЕ DOTA 2
-        // ==========================================
-        let dotaData = [
-            { cat: 'arcana', name: 'Manifold Paradox (PA Arcana)', buy: 24.50, sell: 32.00, liquidity: '120/д' },
-            { cat: 'arcana', name: 'Feast of Abscession (Pudge Arcana)', buy: 22.00, sell: 29.50, liquidity: '95/д' },
-            { cat: 'arcana', name: 'Bladeform Legacy (Juggernaut)', buy: 28.00, sell: 36.00, liquidity: '80/д' },
-            { cat: 'arcana', name: 'Tempest Helm (Zeus Arcana)', buy: 25.00, sell: 33.00, liquidity: '70/д' },
-            { cat: 'immortal', name: 'Codicil of the Veiled Ones (PA)', buy: 12.00, sell: 17.50, liquidity: '200/д' },
-            { cat: 'immortal', name: 'Golden Basher Blades (AM)', buy: 18.00, sell: 25.00, liquidity: '150/д' },
-            { cat: 'treasure', name: 'Immortal Treasure I (2024)', buy: 1.80, sell: 2.50, liquidity: '500/д' },
-            { cat: 'treasure', name: 'Sullen Harvest (Necrophos)', buy: 3.50, sell: 5.20, liquidity: '300/д' }
-        ];
-
-        // ==========================================
-        // PRO-СИСТЕМА
-        // ==========================================
-        function checkProStatus() {
-            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
-            const lock = document.getElementById('dota-lock');
-            if (lock) lock.style.display = isPro ? 'none' : 'flex';
-            return isPro;
-        }
-
-        window.unlockPro = function() {
-            const key = document.getElementById('pro-key-dota').value.trim();
-            if (key === 'VALVE2026' || key.startsWith('VH-PRO-')) {
-                localStorage.setItem('valvehub_pro_unlocked', 'true');
-                checkProStatus();
-                renderDotaTable(document.querySelector('#dota-filters .chip.active').dataset.cat);
-                alert('✅ PRO-доступ активирован!');
-            } else {
-                alert('❌ Неверный ключ. Используйте VALVE2026');
-            }
-        };
-
-        document.getElementById('btn-reset-pro').addEventListener('click', () => {
-            localStorage.removeItem('valvehub_pro_unlocked');
-            checkProStatus();
-            renderDotaTable('all');
-            alert('PRO-доступ сброшен.');
-        });
-
-        // ==========================================
-        // БЛОК 1: ТАБЛИЦА DOTA
-        // ==========================================
-        function renderDotaTable(filter = 'all') {
-            const tbody = document.getElementById('dota-tbody');
-            tbody.innerHTML = '';
-            const budget = parseFloat(document.getElementById('dota-budget').value) || 100;
-            const isPro = localStorage.getItem('valvehub_pro_unlocked') === 'true';
-
-            dotaData.forEach((d) => {
-                if (filter !== 'all' && d.cat !== filter) return;
-
-                const steamNet = d.sell * 0.8695; // -15%
-                const profit = steamNet - d.buy;
-                const roi = (profit / d.buy) * 100;
-                const isGood = roi > 0;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight: 600;">${d.name}</td>
-                    <td>${d.buy.toFixed(2)} $</td>
-                    <td>${steamNet.toFixed(2)} $</td>
-                    <td>${d.liquidity}</td>
-                    <td><span class="profit-green">+${profit.toFixed(2)} $</span><br><span class="roi-badge">+${roi.toFixed(1)}%</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Применяем blur
-            if (!isPro) {
-                const rows = tbody.querySelectorAll('tr');
-                rows.forEach((row, i) => {
-                    if (i >= 2) row.style.filter = 'blur(5px)';
-                });
-            }
-        }
-
-        document.querySelectorAll('#dota-filters .chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('#dota-filters .chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                renderDotaTable(chip.dataset.cat);
-            });
-        });
-
-        document.getElementById('btn-recalc-dota').addEventListener('click', () => {
-            renderDotaTable(document.querySelector('#dota-filters .chip.active').dataset.cat);
-        });
-
-        document.getElementById('btn-add-dota').addEventListener('click', () => {
-            const name = prompt('Название предмета:');
-            if (!name) return;
-            const buy = parseFloat(prompt('Цена на маркете ($):'));
-            if (isNaN(buy) || buy <= 0) return;
-            const sell = parseFloat(prompt('Цена в Steam ($):'));
-            if (isNaN(sell) || sell <= 0) return;
-            const liq = prompt('Ликвидность (например, 100/д):') || '0/д';
-            
-            dotaData.push({ cat: 'all', name, buy, sell, liquidity: liq });
-            renderDotaTable('all');
-            alert('Связка добавлена!');
-        });
-
-        // ==========================================
-        // БЛОК 2: КАЛЬКУЛЯТОР СОКРОВИЩНИЦ
-        // ==========================================
-        function calcTreasure() {
-            const price = parseFloat(document.getElementById('t-price').value) || 2.50;
-            const count = parseInt(document.getElementById('t-count').value) || 15;
-            const cCommon = parseFloat(document.getElementById('t-common').value) || 0.50;
-            const cRare = parseFloat(document.getElementById('t-rare').value) || 8.00;
-            const cVRare = parseFloat(document.getElementById('t-very-rare').value) || 25.00;
-            const cUltra = parseFloat(document.getElementById('t-ultra-rare').value) || 120.00;
-
-            const cost = price * count;
-
-            // Шансы (система Dota 2: базовые шансы Rare ~1/50, Very Rare ~1/200, Ultra Rare ~1/1000)
-            // Но с каждым сундуком шанс нарастает (Escalating Odds)
-            // Упрощенная формула для EV:
-            // Средняя выплата с одного сундука = (обычный сет) + шанс_rare * цена_rare...
-            
-            // Примем средние шансы на 1 сундук:
-            const pRare = 1 / 50;     // 2%
-            const pVRare = 1 / 200;   // 0.5%
-            const pUltra = 1 / 1000;  // 0.1%
-
-            // Ожидаемая выплата с 1 сундука
-            const evPerChest = cCommon + (pRare * cRare) + (pVRare * cVRare) + (pUltra * cUltra);
-            const totalEV = evPerChest * count;
-
-            // Шанс выбить хотя бы 1 за N сундуков: 1 - (1 - p)^N
-            const chanceRare = (1 - Math.pow(1 - pRare, count)) * 100;
-            const chanceVRare = (1 - Math.pow(1 - pVRare, count)) * 100;
-            const chanceUltra = (1 - Math.pow(1 - pUltra, count)) * 100;
-
-            document.getElementById('t-cost').textContent = cost.toFixed(2) + ' $';
-            document.getElementById('t-chance-rare').textContent = chanceRare.toFixed(1) + '%';
-            document.getElementById('t-chance-vrare').textContent = chanceVRare.toFixed(1) + '%';
-            document.getElementById('t-chance-ultra').textContent = chanceUltra.toFixed(1) + '%';
-            document.getElementById('t-ev').textContent = totalEV.toFixed(2) + ' $';
-
-            const verdictEl = document.getElementById('t-verdict');
-            if (totalEV > cost) {
-                verdictEl.textContent = '✅ Открывать выгодно! (EV > Затрат)';
-                verdictEl.style.background = 'rgba(16, 185, 129, 0.2)';
-                verdictEl.style.color = 'var(--green)';
-            } else {
-                verdictEl.textContent = '❌ Выгоднее купить сет напрямую';
-                verdictEl.style.background = 'rgba(239, 68, 68, 0.2)';
-                verdictEl.style.color = 'var(--red)';
-            }
-        }
-
-        // Слушатели
-        ['t-price', 't-count', 't-common', 't-rare', 't-very-rare', 't-ultra-rare'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calcTreasure);
-        });
-
-        // ==========================================
         // ИНИЦИАЛИЗАЦИЯ
         // ==========================================
-        window.onload = function() {
-            checkProStatus();
-            renderDotaTable();
-            calcTreasure();
-        };
+        const VH = window.VH || {};
+        let isPro = VH.isPro ? VH.isPro() : false;
+        
+        // ==========================================
+        // ТАБЫ
+        // ==========================================
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // ==========================================
+        // МОДУЛЬ 1: АРКАНЫ
+        // ==========================================
+        async function loadArcanas() {
+            const listEl = document.getElementById('arcana-list');
+            const statusEl = document.getElementById('arcana-status');
+            listEl.innerHTML = '<div class="spinner"></div>';
+            statusEl.textContent = 'Загрузка реальных цен Steam...';
+
+            try {
+                let priceData;
+                // Используем метод из nav.js, если он есть
+                if (VH.getPrices) {
+                    priceData = await VH.getPrices();
+                } else {
+                    // Прямой запрос к воркеру
+                    const res = await fetch('https://valvehub-api.pepeerror.workers.dev/api/prices');
+                    priceData = await res.json();
+                }
+
+                if (!priceData || !priceData.prices) {
+                    throw new Error('Неверный формат ответа от API');
+                }
+
+                statusEl.textContent = `Обновлено: ${new Date(priceData.updatedAt).toLocaleTimeString()}`;
+                
+                const prices = priceData.prices;
+                
+                const arcanas = [
+                    'Fiery Soul of the Slayer', 'Blades of Voth Domosh', 'Fractal Horns of Inner Abysm',
+                    'Swine of the Sunken Galley', 'Demon Eater', 'Manifold Paradox', 'Frost Avalanche',
+                    'Tempest Helm of the Thundergod', "Great Sage's Reckoning", 'Bladeform Legacy',
+                    'Feast of Abscession', 'The Magus Cypher', 'Planetfall', "Flockheart's Gambit",
+                    'The One True King', 'Compass of the Rising Gale', 'Dread Retribution',
+                    'The Eminence of Ristul', 'Phantom Advent', 'Maw of the Megalodon'
+                ];
+
+                const items = arcanas.map(name => {
+                    const steam = prices[name]?.steam || 0;
+                    const market = steam * 0.75; // Условная цена маркета (в реальности нужен Skinport)
+                    const steamNet = steam / 1.15; 
+                    const profit = steamNet - market;
+                    const roi = market > 0 ? (profit / market) * 100 : 0;
+                    return { name, market, steam, steamNet, profit, roi };
+                }).filter(i => i.steam > 0); 
+
+                if (items.length === 0) {
+                    listEl.innerHTML = '<p style="color: var(--text-muted);">Не удалось загрузить цены. Попробуйте позже.</p>';
+                    return;
+                }
+
+                const sort = document.getElementById('arcana-sort').value;
+                items.sort((a, b) => sort === 'roi' ? b.roi - a.roi : sort === 'profit' ? b.profit - a.profit : b.steam - a.steam);
+
+                listEl.innerHTML = items.map((item, idx) => {
+                    const isLocked = !isPro && idx >= 4;
+                    return `
+                        <div class="card" style="margin-bottom: 10px; ${isLocked ? 'filter: blur(5px); pointer-events: none;' : ''}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 700;">${item.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Steam: $${item.steam.toFixed(2)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: ${item.roi > 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 800;">${item.roi > 0 ? '+' : ''}${item.roi.toFixed(1)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                if (!isPro) {
+                    const lockBtn = document.createElement('button');
+                    lockBtn.className = 'btn';
+                    lockBtn.textContent = '🔓 Активировать PRO';
+                    lockBtn.onclick = async () => {
+                        const key = prompt('Введите PRO-ключ:');
+                        if (key && VH.activateKey) {
+                            const ok = await VH.activateKey(key);
+                            if (ok) { isPro = true; location.reload(); }
+                            else alert('Неверный ключ');
+                        } else {
+                            alert('Метод активации недоступен.');
+                        }
+                    };
+                    listEl.appendChild(lockBtn);
+                }
+
+            } catch (e) {
+                listEl.innerHTML = `<p style="color: var(--red);">Ошибка: ${e.message}</p>`;
+            }
+        }
+
+        document.getElementById('arcana-search')?.addEventListener('input', () => {
+            const q = document.getElementById('arcana-search').value.toLowerCase();
+            document.querySelectorAll('#arcana-list .card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(q) ? 'block' : 'none';
+            });
+        });
+
+        document.getElementById('arcana-sort')?.addEventListener('change', loadArcanas);
+
+        // ==========================================
+        // МОДУЛЬ 2: ПРОФИЛЬ
+        // ==========================================
+        document.getElementById('btn-load-player')?.addEventListener('click', async () => {
+            const id = document.getElementById('player-id').value.trim();
+            const resEl = document.getElementById('player-result');
+            if (!id) return;
+            resEl.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const res = await fetch(`https://valvehub-api.pepeerror.workers.dev/api/dota-player?id=${id}`);
+                const data = await res.json();
+                if (data.error) {
+                    resEl.innerHTML = `<p style="color: var(--red);">${data.error}</p>`;
+                    return;
+                }
+
+                const p = data.profile;
+                const r = data.recent;
+                resEl.innerHTML = `
+                    <div class="card" style="padding: 20px;">
+                        <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                            <img src="${p.avatarfull}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent);">
+                            <div>
+                                <h3 style="margin: 0;">${p.personaname}</h3>
+                                <p style="color: var(--text-muted); margin: 5px 0;">Ранг: ${p.rank_tier || 'Неизвестен'}</p>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;">
+                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: 800; color: var(--green);">${r.winrate}%</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Винрейт (20 игр)</div>
+                            </div>
+                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: 800; color: var(--accent);">${r.avg_kda}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Средний KDA</div>
+                            </div>
+                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: 800; color: var(--gold);">${r.avg_gpm}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">GPM</div>
+                            </div>
+                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: 800; color: var(--gold);">${r.avg_xpm}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">XPM</div>
+                            </div>
+                        </div>
+                        <h4 style="margin-top: 20px;">Топ-3 героя</h4>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            ${data.top_heroes.map(h => `
+                                <div style="text-align: center;">
+                                    <div style="font-weight: 700;">ID ${h.hero_id}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${h.winrate}% (${h.games} игр)</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                resEl.innerHTML = `<p style="color: var(--red);">Ошибка: ${e.message}</p>`;
+            }
+        });
+
+        // ==========================================
+        // МОДУЛЬ 3: МЕТА (Заглушка, пока нет API)
+        // ==========================================
+        function loadMeta() {
+            const listEl = document.getElementById('meta-list');
+            listEl.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">Модуль меты находится в разработке. Как только API героев будет готов, здесь появится полная статистика пабов и про-сцены.</p>`;
+        }
+
+        // ==========================================
+        // МОДУЛЬ 4: ДРАФТ (Заглушка, пока нет API)
+        // ==========================================
+        function initDraft() {
+            const heroList = document.getElementById('hero-list');
+            heroList.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1 / -1;">Модуль драфта находится в разработке.</p>`;
+        }
+
+        // ==========================================
+        // МОДУЛЬ 5: КОНФИГ
+        // ==========================================
+        function generateCfg() {
+            let lines = ['// Autoexec.cfg generated by VALVE HUB', ''];
+            if (document.getElementById('cfg-fps').checked) {
+                lines.push('engine_no_focus_sleep 0', 'dota_cheap_water 1', '');
+            }
+            if (document.getElementById('cfg-shake').checked) {
+                lines.push('dota_camera_disable_zoom 1', 'dota_screen_shake 0', '');
+            }
+            if (document.getElementById('cfg-quickcast').checked) {
+                lines.push('dota_ability_quick_cast 1', 'dota_smart_doubletap 1', '');
+            }
+            if (document.getElementById('cfg-runes').checked) {
+                lines.push('alias "rune_top" "dota_camera_set_lookatpos -2273 1800"', 'alias "rune_bot" "dota_camera_set_lookatpos 3035 -2350"', 'bind "F1" "rune_top"', 'bind "F2" "rune_bot"', '');
+            }
+            if (document.getElementById('cfg-range').checked) {
+                lines.push('dota_disable_range_finder 0', '');
+            }
+            document.getElementById('cfg-output').textContent = lines.join('\n');
+        }
+
+        document.querySelectorAll('#tab-config input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', generateCfg);
+        });
+
+        document.getElementById('btn-copy-cfg')?.addEventListener('click', () => {
+            navigator.clipboard.writeText(document.getElementById('cfg-output').textContent);
+            alert('Скопировано!');
+        });
+
+        document.getElementById('btn-download-cfg')?.addEventListener('click', () => {
+            const blob = new Blob([document.getElementById('cfg-output').textContent], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'autoexec.cfg';
+            a.click();
+        });
+
+        // ==========================================
+        // ЗАПУСК
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadArcanas();
+            loadMeta();
+            initDraft();
+            generateCfg();
+        });
     </script>
     
     <script src="nav.js"></script>
