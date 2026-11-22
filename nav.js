@@ -1,5 +1,6 @@
 const VH_API = "https://workers.dev";
 
+
 window.VH = {
   api: VH_API,
   prices: null,
