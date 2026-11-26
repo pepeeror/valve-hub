@@ -309,16 +309,11 @@
       }
     }
 
-                 async function fetchJsonSmart(targetUrl) {
-      try {
-        const direct = await fetch(targetUrl);
-        if (direct.ok) return await direct.json();
-      } catch (e) {}
-      const gate = ["https:/", "://codetabs.com", "v1", "proxy"].join("/") + "?quest=" + encodeURIComponent(targetUrl);
-      const viaProxy = await fetch(gate);
-      if (!viaProxy.ok) throw new Error("HTTP " + viaProxy.status);
-      return await viaProxy.json();
+                  async function fetchJsonSmart(targetUrl) {
+      const r = await fetch("https://corsproxy.io?" + encodeURIComponent(targetUrl));
+      return await r.json();
     }
+
 
 
     
@@ -335,7 +330,7 @@
       }
       box.innerHTML = `<div class="status-msg">Сканируем профиль через OpenDota...</div>`;
       try {
-        const base = ["https:/", "://opendota.com", "api", "players", id].join("/");
+               const base = "https://opendota.com" + id;
         const [profile, wl, matches] = await Promise.all([
           fetchJsonSmart(base),
           fetchJsonSmart(base + "/wl"),
