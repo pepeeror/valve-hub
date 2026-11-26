@@ -330,7 +330,7 @@
       }
       box.innerHTML = `<div class="status-msg">Сканируем профиль через OpenDota...</div>`;
       try {
-               const base = "https://opendota.com" + id;
+             const base = "https://ap" + "://opendota.com" + "i/players/" + id;
         const [profile, wl, matches] = await Promise.all([
           fetchJsonSmart(base),
           fetchJsonSmart(base + "/wl"),
