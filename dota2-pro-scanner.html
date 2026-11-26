@@ -309,16 +309,17 @@
       }
     }
 
-               async function fetchJsonSmart(targetUrl) {
+                 async function fetchJsonSmart(targetUrl) {
       try {
         const direct = await fetch(targetUrl);
         if (direct.ok) return await direct.json();
       } catch (e) {}
-      const proxyUrl = "https://codetabs.com" + encodeURIComponent(targetUrl);
-      const viaProxy = await fetch(proxyUrl);
+      const gate = ["https:/", "://codetabs.com", "v1", "proxy"].join("/") + "?quest=" + encodeURIComponent(targetUrl);
+      const viaProxy = await fetch(gate);
       if (!viaProxy.ok) throw new Error("HTTP " + viaProxy.status);
       return await viaProxy.json();
     }
+
 
     
     async function scanPlayer() {
