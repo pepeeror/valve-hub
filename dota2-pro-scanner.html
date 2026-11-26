@@ -309,7 +309,18 @@
       }
     }
 
-       async function scanPlayer() {
+          async function fetchJsonSmart(targetUrl) {
+      try {
+        const direct = await fetch(targetUrl);
+        if (direct.ok) return await direct.json();
+      } catch (e) {}
+      const proxyUrl = "https://allorigins.win" + encodeURIComponent(targetUrl);
+      const viaProxy = await fetch(proxyUrl);
+      if (!viaProxy.ok) throw new Error("HTTP " + viaProxy.status);
+      return await viaProxy.json();
+    }
+
+    async function scanPlayer() {
       const raw = document.getElementById("playerIdInput").value.trim();
       const box = document.getElementById("playerResult");
       let id = raw.replace(/\D/g, "");
@@ -320,17 +331,14 @@
       if (id.length === 17 && id.startsWith("7656119")) {
         id = (BigInt(id) - BigInt("76561197960265728")).toString();
       }
-      box.innerHTML = `<div class="status-msg">Сканируем профиль через OpenDota API...</div>`;
+      box.innerHTML = `<div class="status-msg">Сканируем профиль через OpenDota...</div>`;
       try {
-        const res = await fetch("https://opendota.com" + id);
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const profile = await res.json();
-        const [wlRes, matchesRes] = await Promise.all([
-          fetch("https://opendota.com" + id + "/wl"),
-          fetch("https://opendota.com" + id + "/recentMatches")
+        const base = "https://opendota.com" + id;
+        const [profile, wl, matches] = await Promise.all([
+          fetchJsonSmart(base),
+          fetchJsonSmart(base + "/wl"),
+          fetchJsonSmart(base + "/recentMatches")
         ]);
-        const wl = await wlRes.json();
-        const matches = await matchesRes.json();
         const wins = wl.win || 0;
         const losses = wl.lose || 0;
         if (!profile || (!profile.profile && wins === 0 && losses === 0)) {
@@ -368,10 +376,9 @@
           </div>
         `;
       } catch (e) {
-        box.innerHTML = `<div class="status-msg">Не удалось подключиться к OpenDota (отключите VPN/WARP в браузере и повторите).</div>`;
+        box.innerHTML = `<div class="status-msg">Ошибка OpenDota (${e.message}). Попробуйте повторить через 10 секунд.</div>`;
       }
     }
-
 
     loadArcanas();
   </script>
