@@ -1,448 +1,377 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO Сканер Dota 2 (Живые цены Steam) | VALVE HUB</title>
-    <meta name="description" content="Живой сканер Аркан Dota 2 с реальными ценами Steam, профиль игрока, мета патча, контрпик-ассистент и генератор конфига.">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { padding: 10px 20px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
-        .tab-btn:hover { border-color: var(--accent); }
-        .tab-btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--accent); color: var(--accent); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* PRO blur */
-        .pro-blur { filter: blur(5px); pointer-events: none; user-select: none; }
-        .pro-overlay { position: relative; }
-        .pro-overlay::after { content: '🔒 PRO'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); padding: 10px 20px; border-radius: 8px; border: 1px solid var(--gold); color: var(--gold); font-weight: 800; z-index: 10; display: none; }
-        .pro-overlay.locked::after { display: block; }
-
-        .spinner { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
-        .hero-card { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .hero-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .hero-card.selected { border-color: var(--green); background: rgba(16, 185, 129, 0.1); }
-        .hero-card img { width: 48px; height: 48px; border-radius: 50%; margin-bottom: 4px; }
-        .hero-card .name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .draft-slots { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .draft-slot { width: 60px; height: 60px; border-radius: 50%; background: var(--bg-input); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); }
-        .draft-slot.filled { border-style: solid; border-color: var(--accent); overflow: hidden; }
-        .draft-slot img { width: 100%; height: 100%; object-fit: cover; }
-
-        .code-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 13px; color: #c9d1d9; white-space: pre-wrap; max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
-        
-        .checkbox-item { display: flex; align-items: flex-start; gap: 10px; background: var(--bg-input); padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
-        .checkbox-item input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
-        
-        .badge-green { background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
-        .badge-gold { background: rgba(245, 158, 11, 0.2); color: var(--gold); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
-        .badge-red { background: rgba(239, 68, 68, 0.2); color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
-        
-        .pro-lock-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 18, 24, 0.7);
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 10; border-radius: 8px; border: 1px solid var(--border);
-        }
-        .pro-lock-content {
-            background: var(--bg-card); padding: 20px; border-radius: 12px;
-            border: 1px solid var(--accent); text-align: center; max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .pro-lock-content h3 { color: var(--gold); margin-bottom: 10px; font-size: 18px; }
-        .pro-lock-content p { color: var(--text-muted); font-size: 13px; margin-bottom: 15px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRO Сканер Dota 2 — Арканы, Steam Market и Анализ Игрока | VALVE HUB</title>
+  <script src="nav.js" defer></script>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card: #131823;
+      --card-2: #1a2130;
+      --border: #252f44;
+      --accent: #ff4655;
+      --accent-2: #f59e0b;
+      --green: #10b981;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    .container { max-width: 1180px; margin: 0 auto; padding: 28px 18px 60px; }
+    .hero {
+      background: linear-gradient(135deg, #171d2b 0%, #101520 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 26px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .badge-pro {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.16);
+      color: var(--accent-2);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .sub { color: var(--muted); font-size: 14px; max-width: 680px; }
+    .tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+    .tab-btn {
+      background: var(--card);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .search-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    input {
+      flex: 1;
+      min-width: 240px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 15px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn:hover { opacity: 0.92; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .hero-name { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .item-name { font-size: 16px; font-weight: 700; margin-top: 2px; }
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.14);
+      color: var(--green);
+      white-space: nowrap;
+    }
+    .prices {
+      background: var(--card-2);
+      border-radius: 10px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .prices span { color: var(--muted); display: block; font-size: 11px; }
+    .prices strong { font-size: 15px; }
+    .profit-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .profit-badge { color: var(--green); font-weight: 800; font-size: 15px; }
+    .player-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .player-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+    .player-head img { width: 68px; height: 68px; border-radius: 12px; border: 2px solid var(--accent); }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-box { background: var(--card-2); padding: 14px; border-radius: 10px; }
+    .stat-box small { color: var(--muted); display: block; font-size: 12px; }
+    .stat-box b { font-size: 20px; }
+    .status-msg { color: var(--muted); padding: 18px; text-align: center; background: var(--card); border-radius: 12px; border: 1px solid var(--border); }
+    .item-icon { width: 52px; height: 52px; object-fit: contain; background: #0e131d; border-radius: 8px; padding: 4px; }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="hero">
+      <div>
+        <span class="badge-pro">VALVE HUB • DOTA 2 LIVE SCANNER</span>
+        <h1>PRO Сканер Dota 2: Арканы, Steam Market и Профиль</h1>
+        <p class="sub">Витрина ТОП-20 аркан для выгодного пополнения кошелька Steam в «+», живой поиск по всей торговой площадке Dota 2 и мгновенный разбор статистики игрока.</p>
+      </div>
+    </div>
 
-    <header>
-        <div class="nav-container">
-            <a href="index.html" class="logo">VALVE<span>HUB</span> <span style="font-size: 10px; background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle;">PRO</span></a>
-            <ul class="nav-links"></ul>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('arcanas', this)">🔥 ТОП-20 Аркан (Пополнение в +)</button>
+      <button class="tab-btn" onclick="switchTab('market', this)">🔍 Поиск по всей базе Steam Dota 2</button>
+      <button class="tab-btn" onclick="switchTab('player', this)">📊 Сканер игрока Dota 2 (OpenDota)</button>
+    </div>
+
+    <!-- ВКЛАДКА 1: 20 АРКАН -->
+    <div id="tab-arcanas" class="panel active">
+      <div class="search-box">
+        <input type="text" id="arcanaFilter" placeholder="Фильтр по герою или названию арканы (например: Pudge, Phantom, Void)..." oninput="filterArcanas()" />
+      </div>
+      <div id="arcanasGrid" class="grid">
+        <div class="status-msg">Загрузка актуальной таблицы аркан...</div>
+      </div>
+    </div>
+
+    <!-- ВКЛАДКА 2: ЖИВОЙ ПОИСК ПО STEAM MARKET -->
+    <div id="tab-market" class="panel">
+      <div class="search-box">
+        <input type="text" id="steamQuery" placeholder="Введите любой предмет Dota 2 (например: Dragonclaw Hook, Immortal, Invoker, Pudge)..." onkeydown="if(event.key==='Enter') searchSteamMarket()" />
+        <button class="btn" onclick="searchSteamMarket()">Найти в Steam Market</button>
+      </div>
+      <div id="marketGrid" class="grid">
+        <div class="status-msg">Введите название скина выше — мы запросим живые цены напрямую с Торговой площадки Steam.</div>
+      </div>
+    </div>
+
+    <!-- ВКЛАДКА 3: СКАНЕР ИГРОКА -->
+    <div id="tab-player" class="panel">
+      <div class="search-box">
+        <input type="text" id="playerIdInput" placeholder="Введите Dota 2 Friend ID или SteamID64 (например: 111620041)..." onkeydown="if(event.key==='Enter') scanPlayer()" />
+        <button class="btn" onclick="scanPlayer()">Сканировать профиль</button>
+      </div>
+      <div id="playerResult">
+        <div class="status-msg">Укажите открытый ID профиля Dota 2, чтобы загрузить винрейт, ранг и последние 5 матчей.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ВНИМАНИЕ: Замени этот URL на свой реальный воркер, если он другой
+    const API_BASE = "https://valvehub-api.pepeerror.workers.dev";
+    let allArcanas = [];
+
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + name).classList.add("active");
+    }
+
+    async function loadArcanas() {
+      const grid = document.getElementById("arcanasGrid");
+      try {
+        const res = await fetch(`${API_BASE}/api/dota-arcanas`);
+        const data = await res.json();
+        if (!data.ok || !Array.isArray(data.items)) throw new Error("Ошибка данных");
+        allArcanas = data.items;
+        renderArcanas(allArcanas);
+      } catch (e) {
+        grid.innerHTML = `<div class="status-msg">Не удалось загрузить каталог аркан. Проверьте соединение с API.</div>`;
+      }
+    }
+
+    function renderArcanas(list) {
+      const grid = document.getElementById("arcanasGrid");
+      if (!list.length) {
+        grid.innerHTML = `<div class="status-msg">По вашему запросу арканы не найдены.</div>`;
+        return;
+      }
+      grid.innerHTML = list.map(item => `
+        <div class="item-card">
+          <div class="item-top">
+            <div>
+              <div class="hero-name">${item.hero}</div>
+              <div class="item-name">${item.name}</div>
+            </div>
+            <span class="tag">${item.tag || "ВЫГОДНО"}</span>
+          </div>
+          <div class="prices">
+            <div><span>Цена на маркетах</span><strong>$${item.market_usd.toFixed(2)}</strong></div>
+            <div><span>Цена в Steam</span><strong>$${item.steam_usd.toFixed(2)}</strong></div>
+            <div><span>На баланс (-13%)</span><strong style="color:#10b981">$${item.net_steam_usd.toFixed(2)}</strong></div>
+            <div><span>Чистый плюс</span><strong style="color:#10b981">+$${(item.net_steam_usd - item.market_usd).toFixed(2)}</strong></div>
+          </div>
+          <div class="profit-line">
+            <span style="color:var(--muted)">Итоговая выгода пополнения:</span>
+            <span class="profit-badge">+${item.bonus_pct}%</span>
+          </div>
         </div>
-    </header>
+      `).join("");
+    }
 
-    <main>
-        <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 28px; margin-bottom: 10px;">PRO Сканер Dota 2 <span style="font-size: 14px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 6px; vertical-align: middle;">LIVE</span></h1>
-            <p style="color: var(--text-muted);">Живые цены Steam, профили игроков, мета патча и контрпики.</p>
-        </div>
+    function filterArcanas() {
+      const q = document.getElementById("arcanaFilter").value.trim().toLowerCase();
+      const filtered = allArcanas.filter(a =>
+        a.hero.toLowerCase().includes(q) || a.name.toLowerCase().includes(q)
+      );
+      renderArcanas(filtered);
+    }
 
-        <!-- Табы -->
-        <div class="tabs" id="main-tabs">
-            <div class="tab-btn active" data-tab="arcanas">📈 Арканы</div>
-            <div class="tab-btn" data-tab="player">👤 Профиль</div>
-            <div class="tab-btn" data-tab="meta">📊 Мета</div>
-            <div class="tab-btn" data-tab="draft">🎯 Драфт</div>
-            <div class="tab-btn" data-tab="config">⚙️ Конфиг</div>
-        </div>
+    async function searchSteamMarket() {
+      const q = document.getElementById("steamQuery").value.trim();
+      const grid = document.getElementById("marketGrid");
+      if (q.length < 2) {
+        grid.innerHTML = `<div class="status-msg">Введите минимум 2 символа для поиска по базе Steam.</div>`;
+        return;
+      }
+      grid.innerHTML = `<div class="status-msg">Запрашиваем живые цены со Steam Market...</div>`;
+      try {
+        const res = await fetch(`${API_BASE}/api/steam-search?q=${encodeURIComponent(q)}&appid=570`);
+        const data = await res.json();
+        if (!data.ok) {
+          grid.innerHTML = `<div class="status-msg">${data.error || "Ошибка поиска"}</div>`;
+          return;
+        }
+        if (!data.items.length) {
+          grid.innerHTML = `<div class="status-msg">В Steam Market ничего не найдено по запросу «${q}».</div>`;
+          return;
+        }
+        grid.innerHTML = data.items.map(it => `
+          <div class="item-card">
+            <div class="item-top">
+              <div>
+                <div class="hero-name">Лотов в Steam: ${it.listings}</div>
+                <div class="item-name">${it.name}</div>
+              </div>
+              ${it.icon ? `<img src="${it.icon}" class="item-icon" alt="">` : ""}
+            </div>
+            <div class="prices">
+              <div><span>Цена в Steam</span><strong>$${it.steam_usd.toFixed(2)}</strong></div>
+              <div><span>На баланс (-13%)</span><strong style="color:#10b981">$${it.net_steam_usd.toFixed(2)}</strong></div>
+              <div><span>Ориентир маркета</span><strong>~$${it.market_usd.toFixed(2)}</strong></div>
+              <div><span>Потенциал в +</span><strong style="color:#10b981">+${it.bonus_pct}%</strong></div>
+            </div>
+          </div>
+        `).join("");
+      } catch (e) {
+        grid.innerHTML = `<div class="status-msg">Ошибка соединения с сервером Steam Search.</div>`;
+      }
+    }
 
-        <!-- Модуль 1: Арканы -->
-        <div id="tab-arcanas" class="tab-content active">
-            <section class="calculator-section">
-                <h2 class="calc-title">📈 Живой сканер Аркан</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                    <input type="text" id="arcana-search" placeholder="Поиск по названию..." style="flex: 1; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
-                    <select id="arcana-sort" style="padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
-                        <option value="roi">По ROI</option>
-                        <option value="profit">По профиту</option>
-                        <option value="price">По цене</option>
-                    </select>
-                </div>
-                <div id="arcana-status" style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;"></div>
-                <div id="arcana-list"></div>
-                <div style="margin-top: 15px; padding: 15px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
-                    <h4 style="color: var(--red); margin-bottom: 10px;">5 недоступных эксклюзивов (Не передаются)</h4>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 13px; color: var(--text-muted);">
-                        <span>Io (Benevolent Companion)</span>
-                        <span>Spectre (Phantom Advent)</span>
-                        <span>Faceless Void (Claszian Apostasy)</span>
-                        <span>Razor (Voidstorm Asylum)</span>
-                        <span>Earthshaker (Planetfall BP)</span>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Модуль 2: Профиль игрока -->
-        <div id="tab-player" class="tab-content">
-            <section class="calculator-section">
-                <h2 class="calc-title">👤 Профиль игрока</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="text" id="player-id" placeholder="Account ID (например, 123456789)" style="flex: 1; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
-                    <button id="btn-load-player" class="btn" style="width: auto;">Загрузить</button>
-                </div>
-                <div id="player-result"></div>
-            </section>
-        </div>
-
-        <!-- Модуль 3: Мета -->
-        <div id="tab-meta" class="tab-content">
-            <section class="calculator-section">
-                <h2 class="calc-title">📊 Радар Меты Патча</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">Загрузка реальной базы героев в разработке. Скоро здесь появится полный анализ пабов и про-сцены.</p>
-                <div id="meta-list" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <div class="spinner"></div>
-                    <p>Загрузка данных...</p>
-                </div>
-            </section>
-        </div>
-
-        <!-- Модуль 4: Драфт -->
-        <div id="tab-draft" class="tab-content">
-            <section class="calculator-section">
-                <h2 class="calc-title">🎯 Контрпик-Ассистент</h2>
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Выберите до 5 героев врага (бесплатно — до 2).</p>
-                <div class="draft-slots" id="draft-slots">
-                    <div class="draft-slot" data-slot="0">+</div>
-                    <div class="draft-slot" data-slot="1">+</div>
-                    <div class="draft-slot" data-slot="2">+</div>
-                    <div class="draft-slot" data-slot="3">+</div>
-                    <div class="draft-slot" data-slot="4">+</div>
-                </div>
-                <input type="text" id="hero-search" placeholder="Поиск героя..." style="width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff; margin-bottom: 10px;">
-                <div id="hero-list" class="hero-grid"></div>
-                <div id="draft-result" style="margin-top: 20px;"></div>
-            </section>
-        </div>
-
-        <!-- Модуль 5: Конфиг -->
-        <div id="tab-config" class="tab-content">
-            <section class="calculator-section">
-                <h2 class="calc-title">⚙️ Генератор autoexec.cfg</h2>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="cfg-fps" checked>
-                    <label for="cfg-fps">Максимальный FPS и отключение эффектов</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="cfg-shake" checked>
-                    <label for="cfg-shake">Отключение тряски экрана</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="cfg-quickcast" checked>
-                    <label for="cfg-quickcast">Быстрый каст и двойное нажатие</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="cfg-runes" checked>
-                    <label for="cfg-runes">Бинд проверки рун (F1/F2)</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="cfg-range" checked>
-                    <label for="cfg-range">Показ радиуса способностей</label>
-                </div>
-                <div class="code-box" id="cfg-output">// Конфиг</div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button id="btn-copy-cfg" class="btn" style="flex: 1;">📋 Скопировать</button>
-                    <button id="btn-download-cfg" class="btn" style="flex: 1;">💾 Скачать autoexec.cfg</button>
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Положите файл в .../Steam/steamapps/common/dota 2 beta/game/dota/cfg/</p>
-            </section>
-        </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2026 VALVE HUB — Инструменты для игроков и трейдеров</p>
-    </footer>
-
-    <script>
-        // ==========================================
-        // ИНИЦИАЛИЗАЦИЯ
-        // ==========================================
-        const VH = window.VH || {};
-        let isPro = VH.isPro ? VH.isPro() : false;
+    async function scanPlayer() {
+      const id = document.getElementById("playerIdInput").value.trim();
+      const box = document.getElementById("playerResult");
+      if (!id) {
+        box.innerHTML = `<div class="status-msg">Введите числовой ID игрока Dota 2.</div>`;
+        return;
+      }
+      box.innerHTML = `<div class="status-msg">Сканируем профиль через OpenDota API...</div>`;
+      try {
+        const res = await fetch(`${API_BASE}/api/dota-player?id=${encodeURIComponent(id)}`);
+        const data = await res.json();
+        if (!data.ok) {
+          box.innerHTML = `<div class="status-msg">${data.error || "Профиль не найден"}</div>`;
+          return;
+        }
+        const matchesHtml = (data.recent_matches || []).map(m => {
+          const won = (m.player_slot < 128 && m.radiant_win) || (m.player_slot >= 128 && !m.radiant_win);
+          return `
+            <div class="profit-line">
+              <span>Матч #${m.match_id} • K/D/A: <b>${m.kills}/${m.deaths}/${m.assists}</b></span>
+              <span style="color:${won ? '#10b981' : '#ff4655'};font-weight:700">${won ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ'}</span>
+            </div>
+          `;
+        }).join("");
         
-        // ==========================================
-        // ТАБЫ
-        // ==========================================
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-            });
-        });
+        box.innerHTML = `
+          <div class="player-card">
+            <div class="player-head">
+              ${data.avatar ? `<img src="${data.avatar}" alt="">` : ""}
+              <div>
+                <h2>${data.name}</h2>
+                <div style="color:var(--muted);font-size:13px">Account ID: ${data.account_id} • Оценка MMR: ${data.mmr_estimate || "скрыто"}</div>
+              </div>
+            </div>
+            <div class="stats-row">
+              <div class="stat-box"><small>Победы</small><b style="color:#10b981">${data.wins}</b></div>
+              <div class="stat-box"><small>Поражения</small><b style="color:#ff4655">${data.losses}</b></div>
+              <div class="stat-box"><small>Винрейт</small><b>${data.winrate}%</b></div>
+              <div class="stat-box"><small>Ранг Tier</small><b>${data.rank_tier || "Нет"}</b></div>
+            </div>
+            <h3 style="font-size:15px;margin-bottom:8px">Последние 5 матчей:</h3>
+            ${matchesHtml || '<div style="color:var(--muted)">Нет открытых недавних матчей</div>'}
+          </div>
+        `;
+      } catch (e) {
+        box.innerHTML = `<div class="status-msg">Ошибка связи с OpenDota API.</div>`;
+      }
+    }
 
-        // ==========================================
-        // МОДУЛЬ 1: АРКАНЫ
-        // ==========================================
-        async function loadArcanas() {
-            const listEl = document.getElementById('arcana-list');
-            const statusEl = document.getElementById('arcana-status');
-            listEl.innerHTML = '<div class="spinner"></div>';
-            statusEl.textContent = 'Загрузка реальных цен Steam...';
-
-            try {
-                let priceData;
-                // Используем метод из nav.js, если он есть
-                if (VH.getPrices) {
-                    priceData = await VH.getPrices();
-                } else {
-                    // Прямой запрос к воркеру
-                    const res = await fetch('https://valvehub-api.pepeerror.workers.dev/api/prices');
-                    priceData = await res.json();
-                }
-
-                if (!priceData || !priceData.prices) {
-                    throw new Error('Неверный формат ответа от API');
-                }
-
-                statusEl.textContent = `Обновлено: ${new Date(priceData.updatedAt).toLocaleTimeString()}`;
-                
-                const prices = priceData.prices;
-                
-                const arcanas = [
-                    'Fiery Soul of the Slayer', 'Blades of Voth Domosh', 'Fractal Horns of Inner Abysm',
-                    'Swine of the Sunken Galley', 'Demon Eater', 'Manifold Paradox', 'Frost Avalanche',
-                    'Tempest Helm of the Thundergod', "Great Sage's Reckoning", 'Bladeform Legacy',
-                    'Feast of Abscession', 'The Magus Cypher', 'Planetfall', "Flockheart's Gambit",
-                    'The One True King', 'Compass of the Rising Gale', 'Dread Retribution',
-                    'The Eminence of Ristul', 'Phantom Advent', 'Maw of the Megalodon'
-                ];
-
-                const items = arcanas.map(name => {
-                    const steam = prices[name]?.steam || 0;
-                    const market = steam * 0.75; // Условная цена маркета (в реальности нужен Skinport)
-                    const steamNet = steam / 1.15; 
-                    const profit = steamNet - market;
-                    const roi = market > 0 ? (profit / market) * 100 : 0;
-                    return { name, market, steam, steamNet, profit, roi };
-                }).filter(i => i.steam > 0); 
-
-                if (items.length === 0) {
-                    listEl.innerHTML = '<p style="color: var(--text-muted);">Не удалось загрузить цены. Попробуйте позже.</p>';
-                    return;
-                }
-
-                const sort = document.getElementById('arcana-sort').value;
-                items.sort((a, b) => sort === 'roi' ? b.roi - a.roi : sort === 'profit' ? b.profit - a.profit : b.steam - a.steam);
-
-                listEl.innerHTML = items.map((item, idx) => {
-                    const isLocked = !isPro && idx >= 4;
-                    return `
-                        <div class="card" style="margin-bottom: 10px; ${isLocked ? 'filter: blur(5px); pointer-events: none;' : ''}">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-weight: 700;">${item.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-muted);">Steam: $${item.steam.toFixed(2)}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="color: ${item.roi > 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 800;">${item.roi > 0 ? '+' : ''}${item.roi.toFixed(1)}%</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                if (!isPro) {
-                    const lockBtn = document.createElement('button');
-                    lockBtn.className = 'btn';
-                    lockBtn.textContent = '🔓 Активировать PRO';
-                    lockBtn.onclick = async () => {
-                        const key = prompt('Введите PRO-ключ:');
-                        if (key && VH.activateKey) {
-                            const ok = await VH.activateKey(key);
-                            if (ok) { isPro = true; location.reload(); }
-                            else alert('Неверный ключ');
-                        } else {
-                            alert('Метод активации недоступен.');
-                        }
-                    };
-                    listEl.appendChild(lockBtn);
-                }
-
-            } catch (e) {
-                listEl.innerHTML = `<p style="color: var(--red);">Ошибка: ${e.message}</p>`;
-            }
-        }
-
-        document.getElementById('arcana-search')?.addEventListener('input', () => {
-            const q = document.getElementById('arcana-search').value.toLowerCase();
-            document.querySelectorAll('#arcana-list .card').forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(q) ? 'block' : 'none';
-            });
-        });
-
-        document.getElementById('arcana-sort')?.addEventListener('change', loadArcanas);
-
-        // ==========================================
-        // МОДУЛЬ 2: ПРОФИЛЬ
-        // ==========================================
-        document.getElementById('btn-load-player')?.addEventListener('click', async () => {
-            const id = document.getElementById('player-id').value.trim();
-            const resEl = document.getElementById('player-result');
-            if (!id) return;
-            resEl.innerHTML = '<div class="spinner"></div>';
-
-            try {
-                const res = await fetch(`https://valvehub-api.pepeerror.workers.dev/api/dota-player?id=${id}`);
-                const data = await res.json();
-                if (data.error) {
-                    resEl.innerHTML = `<p style="color: var(--red);">${data.error}</p>`;
-                    return;
-                }
-
-                const p = data.profile;
-                const r = data.recent;
-                resEl.innerHTML = `
-                    <div class="card" style="padding: 20px;">
-                        <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                            <img src="${p.avatarfull}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent);">
-                            <div>
-                                <h3 style="margin: 0;">${p.personaname}</h3>
-                                <p style="color: var(--text-muted); margin: 5px 0;">Ранг: ${p.rank_tier || 'Неизвестен'}</p>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;">
-                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: 800; color: var(--green);">${r.winrate}%</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Винрейт (20 игр)</div>
-                            </div>
-                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: 800; color: var(--accent);">${r.avg_kda}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Средний KDA</div>
-                            </div>
-                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: 800; color: var(--gold);">${r.avg_gpm}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">GPM</div>
-                            </div>
-                            <div style="text-align: center; background: var(--bg-input); padding: 10px; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: 800; color: var(--gold);">${r.avg_xpm}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">XPM</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Топ-3 героя</h4>
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            ${data.top_heroes.map(h => `
-                                <div style="text-align: center;">
-                                    <div style="font-weight: 700;">ID ${h.hero_id}</div>
-                                    <div style="font-size: 12px; color: var(--text-muted);">${h.winrate}% (${h.games} игр)</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                resEl.innerHTML = `<p style="color: var(--red);">Ошибка: ${e.message}</p>`;
-            }
-        });
-
-        // ==========================================
-        // МОДУЛЬ 3: МЕТА (Заглушка, пока нет API)
-        // ==========================================
-        function loadMeta() {
-            const listEl = document.getElementById('meta-list');
-            listEl.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">Модуль меты находится в разработке. Как только API героев будет готов, здесь появится полная статистика пабов и про-сцены.</p>`;
-        }
-
-        // ==========================================
-        // МОДУЛЬ 4: ДРАФТ (Заглушка, пока нет API)
-        // ==========================================
-        function initDraft() {
-            const heroList = document.getElementById('hero-list');
-            heroList.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1 / -1;">Модуль драфта находится в разработке.</p>`;
-        }
-
-        // ==========================================
-        // МОДУЛЬ 5: КОНФИГ
-        // ==========================================
-        function generateCfg() {
-            let lines = ['// Autoexec.cfg generated by VALVE HUB', ''];
-            if (document.getElementById('cfg-fps').checked) {
-                lines.push('engine_no_focus_sleep 0', 'dota_cheap_water 1', '');
-            }
-            if (document.getElementById('cfg-shake').checked) {
-                lines.push('dota_camera_disable_zoom 1', 'dota_screen_shake 0', '');
-            }
-            if (document.getElementById('cfg-quickcast').checked) {
-                lines.push('dota_ability_quick_cast 1', 'dota_smart_doubletap 1', '');
-            }
-            if (document.getElementById('cfg-runes').checked) {
-                lines.push('alias "rune_top" "dota_camera_set_lookatpos -2273 1800"', 'alias "rune_bot" "dota_camera_set_lookatpos 3035 -2350"', 'bind "F1" "rune_top"', 'bind "F2" "rune_bot"', '');
-            }
-            if (document.getElementById('cfg-range').checked) {
-                lines.push('dota_disable_range_finder 0', '');
-            }
-            document.getElementById('cfg-output').textContent = lines.join('\n');
-        }
-
-        document.querySelectorAll('#tab-config input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', generateCfg);
-        });
-
-        document.getElementById('btn-copy-cfg')?.addEventListener('click', () => {
-            navigator.clipboard.writeText(document.getElementById('cfg-output').textContent);
-            alert('Скопировано!');
-        });
-
-        document.getElementById('btn-download-cfg')?.addEventListener('click', () => {
-            const blob = new Blob([document.getElementById('cfg-output').textContent], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'autoexec.cfg';
-            a.click();
-        });
-
-        // ==========================================
-        // ЗАПУСК
-        // ==========================================
-        window.addEventListener('DOMContentLoaded', () => {
-            loadArcanas();
-            loadMeta();
-            initDraft();
-            generateCfg();
-        });
-    </script>
-    
-    <script src="nav.js"></script>
+    loadArcanas();
+  </script>
 </body>
 </html>
