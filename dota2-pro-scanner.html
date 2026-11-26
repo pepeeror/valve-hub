@@ -334,25 +334,14 @@
         id = (BigInt(id) - BigInt("76561197960265728")).toString();
       }
       box.innerHTML = `<div class="status-msg">Сканируем профиль через OpenDota API...</div>`;
-      try {
-        const res = await fetch(`https://opendota.com{id}`);
-        const profile = await res.json();
-        if (!profile || !profile.profile) {
-          box.innerHTML = `<div class="status-msg">Профиль скрыт настройками приватности Dota 2 или ID не найден.</div>`;
+     try {
+        const res = await fetch(`${API_BASE}/api/dota-player?id=${encodeURIComponent(id)}`);
+        const data = await res.json();
+        if (!data.ok) {
+          box.innerHTML = `<div class="status-msg">${data.error || "Профиль скрыт или не найден."}</div>`;
           return;
         }
-        const [wlRes, matchesRes] = await Promise.all([
-          fetch(`https://opendota.com{id}/wl`),
-          fetch(`https://opendota.com{id}/recentMatches`)
-        ]);
-        const wl = await wlRes.json();
-        const matches = await matchesRes.json();
-        const wins = wl.win || 0;
-        const losses = wl.lose || 0;
-        const total = wins + losses;
-        const winrate = total > 0 ? +((wins / total) * 100).toFixed(1) : 0;
-
-        const matchesHtml = (Array.isArray(matches) ? matches.slice(0, 5) : []).map(m => {
+        const matchesHtml = (data.recent_matches || []).map(m => {
           const won = (m.player_slot < 128 && m.radiant_win) || (m.player_slot >= 128 && !m.radiant_win);
           return `<div class="profit-line">
             <span>Матч #${m.match_id} • K/D/A: <b>${m.kills}/${m.deaths}/${m.assists}</b></span>
@@ -363,27 +352,25 @@
         box.innerHTML = `
           <div class="player-card">
             <div class="player-head">
-              ${profile.profile.avatarfull ? `<img src="${profile.profile.avatarfull}" alt="" />` : ""}
+              ${data.avatar ? `<img src="${data.avatar}" alt="" />` : ""}
               <div>
-                <h2>${profile.profile.personaname || "Игрок Dota 2"}</h2>
-                <div style="color:var(--muted);font-size:13px">Account ID: ${id} • Оценка MMR: ${profile.mmr_estimate?.estimate || "скрыто"}</div>
+                <h2>${data.name}</h2>
+                <div style="color:var(--muted);font-size:13px">Account ID: ${data.account_id} • Оценка MMR: ${data.mmr_estimate || "скрыто"}</div>
               </div>
             </div>
             <div class="stats-row">
-              <div class="stat-box"><small>Победы</small><b style="color:#10b981">${wins}</b></div>
-              <div class="stat-box"><small>Поражения</small><b style="color:#ff4655">${losses}</b></div>
-              <div class="stat-box"><small>Винрейт</small><b>${winrate}%</b></div>
-              <div class="stat-box"><small>Ранг Tier</small><b>${profile.rank_tier || "Нет"}</b></div>
+              <div class="stat-box"><small>Победы</small><b style="color:#10b981">${data.wins}</b></div>
+              <div class="stat-box"><small>Поражения</small><b style="color:#ff4655">${data.losses}</b></div>
+              <div class="stat-box"><small>Винрейт</small><b>${data.winrate}%</b></div>
+              <div class="stat-box"><small>Ранг Tier</small><b>${data.rank_tier || "Нет"}</b></div>
             </div>
             <h3 style="font-size:15px;margin-bottom:8px">Последние 5 матчей:</h3>
             ${matchesHtml || '<div style="color:var(--muted)">Нет открытых недавних матчей</div>'}
           </div>
         `;
       } catch (e) {
-        box.innerHTML = `<div class="status-msg">Ошибка связи с OpenDota API.</div>`;
+        box.innerHTML = `<div class="status-msg">Ошибка связи с сервером VALVE HUB API.</div>`;
       }
-    }
-
 
     loadArcanas();
   </script>
